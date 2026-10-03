@@ -12,8 +12,8 @@ import {
 
 interface TopHeaderProps {
   currentUser: StudentUser;
-  currentTab: 'dashboard' | 'notes' | 'papers' | 'manuals' | 'announcements';
-  onSelectTab: (tab: 'dashboard' | 'notes' | 'papers' | 'manuals' | 'announcements') => void;
+  currentTab: 'dashboard' | 'chem3' | 'notes' | 'papers' | 'manuals' | 'announcements';
+  onSelectTab: (tab: 'dashboard' | 'chem3' | 'notes' | 'papers' | 'manuals' | 'announcements') => void;
   selectedSemester: number;
   onSelectSemester: (sem: number) => void;
   onOpenMobileMenu: () => void;
@@ -35,7 +35,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   const getBreadcrumbTitle = () => {
     switch (currentTab) {
       case 'dashboard':
-        return 'Student Dashboard';
+        return 'SIT Student Dashboard';
+      case 'chem3':
+        return 'Chemical Engineering — 3rd Semester Hub';
       case 'notes':
         return 'Lecture Notes & Syllabus Modules';
       case 'papers':

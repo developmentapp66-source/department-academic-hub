@@ -1,7 +1,9 @@
 import React from 'react';
 import { StudentUser } from '../types';
+import { INSTITUTION_INFO } from '../data/mockData';
 import {
   LayoutDashboard,
+  Layers,
   BookOpen,
   FileText,
   FlaskConical,
@@ -17,8 +19,8 @@ import {
 
 interface SidebarProps {
   currentUser: StudentUser;
-  currentTab: 'dashboard' | 'notes' | 'papers' | 'manuals' | 'announcements';
-  onSelectTab: (tab: 'dashboard' | 'notes' | 'papers' | 'manuals' | 'announcements') => void;
+  currentTab: 'dashboard' | 'chem3' | 'notes' | 'papers' | 'manuals' | 'announcements';
+  onSelectTab: (tab: 'dashboard' | 'chem3' | 'notes' | 'papers' | 'manuals' | 'announcements') => void;
   onLogout: () => void;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
@@ -45,7 +47,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Dashboard',
       icon: LayoutDashboard,
       badge: null,
-      description: 'Overview & quick access',
+      description: 'SIT Tumakuru portal overview',
+    },
+    {
+      id: 'chem3' as const,
+      label: 'Chem Engg 3rd Sem',
+      icon: Layers,
+      badge: '3rd Sem',
+      description: 'Subject-wise directory',
+      isHighlight: true,
     },
     {
       id: 'notes' as const,
@@ -66,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Lab Manuals',
       icon: FlaskConical,
       badge: `${counts.manuals}`,
-      description: 'Code & experiment steps',
+      description: 'Procedures & viva Q&A',
     },
     {
       id: 'announcements' as const,
@@ -74,11 +84,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Bell,
       badge: `${counts.announcements} new`,
       isAlert: true,
-      description: 'Circulars & deadlines',
+      description: 'SIT circulars & notices',
     },
   ];
 
-  const handleNavClick = (tab: 'dashboard' | 'notes' | 'papers' | 'manuals' | 'announcements') => {
+  const handleNavClick = (tab: 'dashboard' | 'chem3' | 'notes' | 'papers' | 'manuals' | 'announcements') => {
     onSelectTab(tab);
     onCloseMobile();
   };
@@ -107,17 +117,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="w-10 h-10 rounded-xl overflow-hidden shadow-xs border border-slate-200 bg-slate-900 shrink-0">
                 <img
                   src="/src/assets/images/academic_crest_symbol_1791032252645.jpg"
-                  alt="Academic Emblem"
+                  alt="SIT Emblem"
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-slate-900 tracking-tight leading-none">
-                  Department Hub
+                  SIT Tumakuru
                 </span>
-                <span className="text-[11px] text-blue-600 font-semibold tracking-wide uppercase mt-1">
-                  Academic Portal
+                <span className="text-[11px] text-blue-600 font-bold tracking-wide uppercase mt-1">
+                  Chemical Engineering
                 </span>
               </div>
             </div>
@@ -133,15 +143,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Department Tagline Banner */}
-          <div className="px-5 py-3 bg-blue-50/50 border-b border-blue-100/60 flex items-center gap-2 text-[11px] text-blue-900 font-medium">
+          <div className="px-5 py-3 bg-blue-50/60 border-b border-blue-100 flex items-center gap-2 text-[11px] text-blue-950 font-medium">
             <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-            <span className="truncate">Dept of {currentUser.deptCode} · Semester {currentUser.semester}</span>
+            <span className="truncate">Chemical Engg · Semester {currentUser.semester}</span>
           </div>
 
           {/* Navigation Items */}
           <div className="px-3 py-4 space-y-1">
             <div className="px-3 pb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              Main Menu
+              Portal Menu
             </div>
             {navItems.map((item) => {
               const isActive = currentTab === item.id;
@@ -162,6 +172,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       className={`p-1.5 rounded-lg transition-colors ${
                         isActive
                           ? 'bg-white/20 text-white'
+                          : item.isHighlight
+                          ? 'bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white'
                           : 'bg-slate-100 text-slate-500 group-hover:text-blue-600 group-hover:bg-blue-50'
                       }`}
                     >
@@ -186,6 +198,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           ? 'bg-white text-blue-700'
                           : item.isAlert
                           ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                          : item.isHighlight
+                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
                           : 'bg-slate-100 text-slate-600'
                       }`}
                     >
@@ -217,7 +231,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-              <span>Section {currentUser.section}</span>
+              <span className="truncate max-w-[120px]">SIT Tumakuru</span>
               <span className="font-semibold text-slate-700 font-mono">Sem {currentUser.semester}</span>
             </div>
           </div>

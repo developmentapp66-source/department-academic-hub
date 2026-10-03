@@ -1,752 +1,713 @@
 import { StudentUser, Subject, NoteItem, QuestionPaperItem, LabManualItem, AnnouncementItem } from '../types';
 
+export const INSTITUTION_INFO = {
+  name: 'Siddaganga Institute of Technology, Tumakuru',
+  shortName: 'SIT Tumakuru',
+  department: 'Chemical Engineering',
+  deptCode: 'CH',
+  activeSemester: 3,
+  accreditation: 'Autonomous Institution Affiliated to VTU · Approved by AICTE · NAAC A++ & NBA Accredited',
+  disclaimer: 'Curriculum & Demo Data Notice: Subjects, course codes (marked with [DEMO]), lecture notes, and question papers are realistic demo representations for 3rd-Semester Chemical Engineering until your official college syllabus document is provided.'
+};
+
 export const DEMO_STUDENTS: StudentUser[] = [
   {
-    usn: '1MS21CS042',
-    name: 'Aditya Sharma',
-    department: 'Computer Science & Engineering',
-    deptCode: 'CSE',
-    semester: 5,
-    section: 'A',
-    academicYear: '2024–2025',
-    email: 'aditya.21cs042@msrit.edu'
-  },
-  {
-    usn: '1MS22EC018',
-    name: 'Priyanka Rao',
-    department: 'Electronics & Communication Engineering',
-    deptCode: 'ECE',
-    semester: 4,
-    section: 'B',
-    academicYear: '2024–2025',
-    email: 'priyanka.22ec018@msrit.edu'
-  },
-  {
-    usn: '1MS23AI005',
-    name: 'Rohan Nambiar',
-    department: 'Artificial Intelligence & Data Science',
-    deptCode: 'AI&DS',
+    usn: '1SI23CH015',
+    name: 'Ananya H. S.',
+    institution: 'Siddaganga Institute of Technology, Tumakuru',
+    department: 'Chemical Engineering',
+    deptCode: 'CH',
     semester: 3,
     section: 'A',
     academicYear: '2024–2025',
-    email: 'rohan.23ai005@msrit.edu'
+    email: 'ananyahs.23ch015@sit.ac.in'
+  },
+  {
+    usn: '1SI23CH042',
+    name: 'Darshan Gowda',
+    institution: 'Siddaganga Institute of Technology, Tumakuru',
+    department: 'Chemical Engineering',
+    deptCode: 'CH',
+    semester: 3,
+    section: 'A',
+    academicYear: '2024–2025',
+    email: 'darshangowda.23ch042@sit.ac.in'
+  },
+  {
+    usn: '1SI22CH028',
+    name: 'Preethi R.',
+    institution: 'Siddaganga Institute of Technology, Tumakuru',
+    department: 'Chemical Engineering',
+    deptCode: 'CH',
+    semester: 4,
+    section: 'B',
+    academicYear: '2024–2025',
+    email: 'preethir.22ch028@sit.ac.in'
   }
 ];
 
 export const SUBJECTS_LIST: Subject[] = [
-  // 5th Sem CSE
-  { code: '21CS51', name: 'Management, Entrepreneurship & IPR', semester: 5, credits: 3, faculty: 'Dr. Suresh Babu', category: 'Core' },
-  { code: '21CS52', name: 'Computer Networks & Security', semester: 5, credits: 4, faculty: 'Prof. K. Venkatesh', category: 'Core' },
-  { code: '21CS53', name: 'Database Management Systems', semester: 5, credits: 4, faculty: 'Dr. Anita Deshmukh', category: 'Core' },
-  { code: '21CS54', name: 'Automata Theory & Computability', semester: 5, credits: 3, faculty: 'Dr. Rajeshwari K.', category: 'Core' },
-  { code: '21CS55', name: 'Software Engineering & Agile', semester: 5, credits: 3, faculty: 'Prof. S. R. Hegde', category: 'Core' },
-  { code: '21CSL56', name: 'Database Applications & Web Lab', semester: 5, credits: 2, faculty: 'Dr. Anita Deshmukh', category: 'Laboratory' },
-  { code: '21CSL57', name: 'Computer Networks Lab', semester: 5, credits: 2, faculty: 'Prof. K. Venkatesh', category: 'Laboratory' },
+  // 3rd Semester Chemical Engineering (Core Focus)
+  {
+    code: 'CH31-DEMO',
+    name: 'Material & Energy Balances',
+    semester: 3,
+    credits: 4,
+    faculty: 'Dr. S. K. Hiremath',
+    category: 'Core'
+  },
+  {
+    code: 'CH32-DEMO',
+    name: 'Fluid Mechanics for Chemical Engineers',
+    semester: 3,
+    credits: 4,
+    faculty: 'Prof. M. B. Patil',
+    category: 'Core'
+  },
+  {
+    code: 'CH33-DEMO',
+    name: 'Chemical Process Calculations',
+    semester: 3,
+    credits: 3,
+    faculty: 'Dr. Geetha K.',
+    category: 'Core'
+  },
+  {
+    code: 'CH34-DEMO',
+    name: 'Technical Chemistry & Instrumental Analysis',
+    semester: 3,
+    credits: 3,
+    faculty: 'Dr. R. N. Murthy',
+    category: 'Core'
+  },
+  {
+    code: 'MAT31-DEMO',
+    name: 'Transform Calculus & Numerical Techniques',
+    semester: 3,
+    credits: 3,
+    faculty: 'Dr. V. Shanmukhappa',
+    category: 'Core'
+  },
+  {
+    code: 'CHL36-DEMO',
+    name: 'Fluid Flow Operations Laboratory',
+    semester: 3,
+    credits: 2,
+    faculty: 'Prof. M. B. Patil & Mr. Chethan',
+    category: 'Laboratory'
+  },
+  {
+    code: 'CHL37-DEMO',
+    name: 'Technical Chemistry Laboratory',
+    semester: 3,
+    credits: 2,
+    faculty: 'Dr. R. N. Murthy & Mrs. Kavya',
+    category: 'Laboratory'
+  },
 
-  // 4th Sem CSE / ECE
-  { code: '21CS41', name: 'Design & Analysis of Algorithms', semester: 4, credits: 4, faculty: 'Prof. P. R. Murthy', category: 'Core' },
-  { code: '21CS42', name: 'Operating Systems', semester: 4, credits: 3, faculty: 'Dr. Sneha Patil', category: 'Core' },
-  { code: '21CS43', name: 'Microcontroller & Embedded Systems', semester: 4, credits: 3, faculty: 'Prof. N. Swaminathan', category: 'Core' },
-  { code: '21CSL46', name: 'Algorithms Laboratory', semester: 4, credits: 2, faculty: 'Prof. P. R. Murthy', category: 'Laboratory' },
-
-  // 3rd Sem CSE / AI
-  { code: '21CS31', name: 'Transform Calculus & Numerical Tech', semester: 3, credits: 3, faculty: 'Dr. G. Ramanathan', category: 'Core' },
-  { code: '21CS32', name: 'Data Structures and Applications', semester: 3, credits: 4, faculty: 'Prof. Ananya Sen', category: 'Core' },
-  { code: '21CS33', name: 'Analog and Digital Electronics', semester: 3, credits: 3, faculty: 'Dr. R. Balaji', category: 'Core' },
-  { code: '21CSL36', name: 'Data Structures Laboratory', semester: 3, credits: 2, faculty: 'Prof. Ananya Sen', category: 'Laboratory' },
-
-  // 6th Sem CSE
-  { code: '21CS61', name: 'Machine Learning Techniques', semester: 6, credits: 4, faculty: 'Dr. Kavitha Menon', category: 'Core' },
-  { code: '21CS62', name: 'Compiler Design', semester: 6, credits: 4, faculty: 'Prof. Harish Gowda', category: 'Core' },
-  { code: '21CS63', name: 'Cloud Computing & Virtualization', semester: 6, credits: 3, faculty: 'Dr. M. S. Rao', category: 'Core' },
-  { code: '21CSL66', name: 'Machine Learning Laboratory', semester: 6, credits: 2, faculty: 'Dr. Kavitha Menon', category: 'Laboratory' }
+  // 4th Semester Chemical Engineering
+  {
+    code: 'CH41-DEMO',
+    name: 'Chemical Engineering Thermodynamics I',
+    semester: 4,
+    credits: 4,
+    faculty: 'Dr. S. K. Hiremath',
+    category: 'Core'
+  },
+  {
+    code: 'CH42-DEMO',
+    name: 'Mechanical Operations',
+    semester: 4,
+    credits: 3,
+    faculty: 'Prof. Siddalingaiah',
+    category: 'Core'
+  },
+  {
+    code: 'CHL46-DEMO',
+    name: 'Mechanical Operations Laboratory',
+    semester: 4,
+    credits: 2,
+    faculty: 'Prof. Siddalingaiah',
+    category: 'Laboratory'
+  }
 ];
 
 export const MOCK_NOTES: NoteItem[] = [
   {
-    id: 'note-501',
-    subjectCode: '21CS52',
-    subjectName: 'Computer Networks & Security',
-    semester: 5,
+    id: 'note-ch31-u1',
+    subjectCode: 'CH31-DEMO',
+    subjectName: 'Material & Energy Balances',
+    semester: 3,
     unit: 1,
-    unitTitle: 'Introduction & Application Layer Protocols',
-    title: 'Network Core, Packet Switching, HTTP/2, DNS & Socket API',
-    topics: ['Edge vs Core', 'Packet Switching vs Circuit Switching', 'Delay & Loss in Networks', 'HTTP 1.1 vs HTTP/2', 'DNS Hierarchy & Resolution', 'Socket Programming with TCP/UDP'],
-    author: 'Prof. K. Venkatesh',
-    dateUpdated: '2024-09-18',
-    pages: 42,
-    fileSize: '4.8 MB',
-    summary: 'Comprehensive notes covering network edge/core architectures, queuing delays, transmission principles, socket architectures, and HTTP caching mechanics.',
+    unitTitle: 'Steady-State Material Balances without Chemical Reactions',
+    title: 'Conservation of Mass, Degrees of Freedom, Bypass & Recycle Streams',
+    topics: [
+      'Steady-state vs Unsteady-state Systems',
+      'Law of Conservation of Mass for Single and Multi-unit Systems',
+      'Degrees of Freedom Analysis (N_df = N_unknowns - N_indep_eqs)',
+      'Recycle Streams, Recycle Ratio & Combined Feed',
+      'Bypass Streams and Purge Fraction Calculations',
+      'Tie Components and Inerts Tracking'
+    ],
+    author: 'Dr. S. K. Hiremath',
+    dateUpdated: '2024-09-20',
+    pages: 44,
+    fileSize: '4.6 MB',
+    summary: 'Comprehensive lecture notes on material balance fundamentals for non-reacting systems, covering flowsheets with recycle, bypass, purge, and tie substance methodology with solved numerical examples.',
     contentPreview: [
-      '1. Overview of Internet Architecture: The Internet is a network of networks. End systems (hosts) connect to Edge routers via Access Networks (Fiber, Cable, DSL, 5G Wireless).',
-      '2. Packet Switching vs Circuit Switching: Packet switching uses store-and-forward routing with statistical multiplexing, leading to queuing delay and potential packet drop. Circuit switching allocates dedicated TDM/FDM resources without queue delays but suffers from idle waste.',
-      '3. Sources of Packet Delay: Total Nodal Delay = d_proc + d_queue + d_trans + d_prop. Where d_trans = L/R (L = packet length in bits, R = transmission rate in bps) and d_prop = d/s (d = distance, s = propagation speed ≈ 2×10^8 m/s).',
-      '4. Domain Name System (DNS): Distributed hierarchical database comprised of Root DNS, Top-Level Domain (TLD) servers, Authoritative servers, and Local DNS caches. Employs both Recursive and Iterative query resolution.'
+      '1. General Material Balance Equation: Accumulation = Input - Output + Generation - Consumption. At steady state, Accumulation = 0, simplifying the equation to: Input + Generation = Output + Consumption.',
+      '2. Degrees of Freedom Analysis: N_df = N_unknowns - N_independent_material_balances - N_other_specifications. If N_df = 0, the system is fully specified and solvable. If N_df > 0, the problem is underspecified.',
+      '3. Recycle Operations: Used to recover unreacted reactants, improve heat exchange, and dilute feed streams. Recycle ratio = Recycle Flow Rate / Fresh Feed Flow Rate.',
+      '4. Purge Operations: Essential in closed recycle loops containing inert components to prevent accumulation of non-reacting impurities.',
+      '5. Bypass Fraction: A stream diverted around one or more process units and reunited with the downstream product stream to adjust concentration, temperature, or flow rate.'
     ],
     keyDefinitions: [
-      { term: 'Throughput', explanation: 'The rate (bits/time unit) at which bits are being transferred between a sender and receiver.' },
-      { term: 'Propagation Delay', explanation: 'Time required for a single bit to travel from beginning of link to router interface (d / s).' },
-      { term: 'Iterative DNS Resolution', explanation: 'The contacted server replies with the address of the next server in hierarchy for the client to contact directly.' }
+      { term: 'Tie Component', explanation: 'A substance that enters in only one feed stream and leaves in only one product stream without reacting, serving as a direct computational bridge.' },
+      { term: 'Purge Stream', explanation: 'A fractional bleed stream withdrawn from a recycle loop to continuously discharge inert impurities.' },
+      { term: 'Single-Pass Conversion', explanation: 'Fraction of reactant converted in one pass through the chemical reactor: (Reactant in reactor feed - Reactant in reactor exit) / Reactant in reactor feed.' }
     ],
     importantFormulasOrCode: [
-      'Transmission Delay: d_trans = L / R',
-      'Bandwidth-Delay Product: BDP = R × RTT (represents max bits in flight)',
-      'Little\'s Law: Average Queuing Delay N = λ × W'
+      'Overall Material Balance: Total Fresh Feed (F) = Total Net Products (P)',
+      'Recycle Ratio: R_R = Mass flow rate of Recycle stream / Fresh Feed flow rate',
+      'Purge Ratio: P_R = Flow rate of Purge stream / Flow rate of Recycle loop before purge',
+      'Degrees of Freedom: N_df = N_unknown_variables - N_independent_equations'
     ],
-    downloadFileName: '21CS52_Unit1_AppLayer_Venkatesh.pdf'
+    downloadFileName: 'SIT_CH31_Unit1_Material_Balances_Hiremath.pdf'
   },
   {
-    id: 'note-502',
-    subjectCode: '21CS52',
-    subjectName: 'Computer Networks & Security',
-    semester: 5,
+    id: 'note-ch31-u2',
+    subjectCode: 'CH31-DEMO',
+    subjectName: 'Material & Energy Balances',
+    semester: 3,
     unit: 2,
-    unitTitle: 'Transport Layer & Congestion Control',
-    title: 'TCP vs UDP, Reliable Data Transfer (rdt 3.0), Flow & Congestion Control',
-    topics: ['Transport Layer Multiplexing', 'UDP Checksum Calculation', 'Go-Back-N vs Selective Repeat', 'TCP 3-Way Handshake & Teardown', 'TCP Reno vs Tahoe Congestion Control', 'AIMD & Fast Recovery'],
-    author: 'Prof. K. Venkatesh',
-    dateUpdated: '2024-10-02',
-    pages: 58,
-    fileSize: '5.2 MB',
-    summary: 'Deep dive into end-to-end transport mechanics, sliding window calculations, AIMD state machines, fast retransmit heuristics, and buffer management.',
-    contentPreview: [
-      '1. Transport-Layer Services: Logical communication between application processes running on different hosts, distinct from network layer host-to-host service.',
-      '2. Principles of Reliable Data Transfer: Progression from rdt 1.0 (reliable channel) to rdt 2.0 (bit errors + ACKs/NAKs), rdt 2.2 (ACK with sequence number), and rdt 3.0 (lossy channel with countdown timer).',
-      '3. Pipelined Protocols: Go-Back-N (GBN) sender allows up to N unacknowledged packets; receiver discards out-of-order packets and sends cumulative ACK. Selective Repeat (SR) individual buffer acknowledges each packet.',
-      '4. TCP Congestion Control States: Slow Start (exponential cwnd growth per RTT until ssthresh), Congestion Avoidance (linear growth cwnd += 1 MSS per RTT), and Fast Recovery upon 3 duplicate ACKs.'
+    unitTitle: 'Stoichiometry & Material Balances with Chemical Reactions',
+    title: 'Limiting Reactant, Excess Reactant, Extent of Reaction & Yield',
+    topics: [
+      'Stoichiometric Ratios and Molecular Mass Calculations',
+      'Identification of Limiting and Excess Reactants',
+      'Percentage Excess Calculation: (Feed - Theoretical) / Theoretical * 100',
+      'Fractional Conversion and Selectivity',
+      'Atomic Species Balance vs Extent of Reaction Method',
+      'Combustion of Hydrocarbons: Theoretical Oxygen vs Air'
     ],
-    keyDefinitions: [
-      { term: 'Cumulative ACK', explanation: 'TCP ACK indicates the sequence number of next expected byte, implicitly acknowledging all earlier bytes.' },
-      { term: 'AIMD', explanation: 'Additive Increase Multiplicative Decrease: sender increases congestion window by 1 MSS per RTT and halves it on triple duplicate ACK.' }
-    ],
-    importantFormulasOrCode: [
-      'EstimatedRTT = (1 - α) * EstimatedRTT + α * SampleRTT (typically α = 0.125)',
-      'DevRTT = (1 - β) * DevRTT + β * |SampleRTT - EstimatedRTT| (typically β = 0.25)',
-      'TimeoutInterval = EstimatedRTT + 4 * DevRTT'
-    ],
-    downloadFileName: '21CS52_Unit2_Transport_Venkatesh.pdf'
-  },
-  {
-    id: 'note-503',
-    subjectCode: '21CS53',
-    subjectName: 'Database Management Systems',
-    semester: 5,
-    unit: 1,
-    unitTitle: 'Relational Model, ER Modeling & SQL Foundation',
-    title: 'Entity-Relationship Diagrams, Relational Algebra, DDL & DML Schema Design',
-    topics: ['Database System Architecture', 'Weak Entities & Identifying Relationships', 'Relational Algebra Operators', 'Joins (Theta, Natural, Outer)', 'Complex SQL Subqueries & Group By', 'Integrity Constraints'],
-    author: 'Dr. Anita Deshmukh',
-    dateUpdated: '2024-09-12',
-    pages: 46,
-    fileSize: '3.9 MB',
-    summary: 'Detailed explanation of 3-tier ANSI-SPARC architecture, ER-to-Relational conversion algorithms, relational algebra syntax, and constraint enforcement.',
-    contentPreview: [
-      '1. Conceptual Data Modeling: Entities, Attributes (Simple, Composite, Multi-valued, Derived), Key Attributes, Cardinality Ratios (1:1, 1:N, M:N), and Participation Constraints (Total vs Partial).',
-      '2. ER to Relational Mapping: Regular entity types map to tables; 1:N relationships map by placing foreign key of 1-side into N-side table; M:N relationships require new junction table with composite primary keys.',
-      '3. Relational Algebra Fundamentals: Selection (σ), Projection (π), Union (∪), Set Difference (-), Cartesian Product (×), Rename (ρ), and Natural Join (⋈).'
-    ],
-    keyDefinitions: [
-      { term: 'Foreign Key Constraint', explanation: 'Referential integrity rule stating attribute values must match an existing primary key value in referenced table or be NULL.' },
-      { term: 'Weak Entity', explanation: 'An entity type that cannot be identified solely by its own attributes and relies on an identifying owner entity.' }
-    ],
-    downloadFileName: '21CS53_Unit1_ER_Relational_Deshmukh.pdf'
-  },
-  {
-    id: 'note-504',
-    subjectCode: '21CS53',
-    subjectName: 'Database Management Systems',
-    semester: 5,
-    unit: 3,
-    unitTitle: 'Normalization & Functional Dependencies',
-    title: '1NF, 2NF, 3NF, BCNF, Minimal Covers & Lossless Decomposition',
-    topics: ['Update, Insertion, Deletion Anomalies', 'Armstrong Axioms', 'Attribute Closure Algorithm', 'Canonical Minimal Cover', 'Boyce-Codd Normal Form', 'Dependency Preservation Testing'],
-    author: 'Dr. Anita Deshmukh',
-    dateUpdated: '2024-10-15',
+    author: 'Dr. S. K. Hiremath',
+    dateUpdated: '2024-10-04',
     pages: 52,
-    fileSize: '4.4 MB',
-    summary: 'Complete guide to removing redundancy via decomposition, closure calculation step-by-step examples, and proofs of lossless-join decomposition.',
+    fileSize: '5.1 MB',
+    summary: 'Detailed derivation and step-by-step problems for chemical reacting systems, atomic balances, combustion calculations, Orsat analysis, and yield optimization.',
     contentPreview: [
-      '1. Pitfalls in Relational Design: Redundant data leads to storage overhead, update anomalies (inconsistent replicas), insertion anomalies (cannot add without dummy key), and deletion anomalies.',
-      '2. Functional Dependency (FD): X -> Y holds in relation R if whenever two tuples agree on X, they must also agree on Y.',
-      '3. Normal Forms Hierarchy: 1NF requires atomic attribute values. 2NF prohibits partial dependencies on any candidate key. 3NF prohibits transitive dependencies (for X -> A, either X is superkey or A is prime). BCNF requires X to be a superkey for every non-trivial X -> A.'
+      '1. Limiting Reactant Concept: The reactant that is present in the smallest stoichiometric quantity and would be completely consumed first if the reaction goes to completion.',
+      '2. Theoretical Oxygen: The moles of O2 required for complete combustion of all carbon to CO2, hydrogen to H2O, and sulfur to SO2.',
+      '3. Percent Excess Air: Percent excess air = (Moles of air fed - Moles of air theoretical) / (Moles of air theoretical) * 100.',
+      '4. Atomic Balances: Since atoms can neither be created nor destroyed in ordinary chemical reactions, input of element j = output of element j.'
     ],
-    downloadFileName: '21CS53_Unit3_Normalization_Deshmukh.pdf'
+    downloadFileName: 'SIT_CH31_Unit2_Reaction_Balances_Hiremath.pdf'
   },
   {
-    id: 'note-505',
-    subjectCode: '21CS54',
-    subjectName: 'Automata Theory & Computability',
-    semester: 5,
+    id: 'note-ch32-u1',
+    subjectCode: 'CH32-DEMO',
+    subjectName: 'Fluid Mechanics for Chemical Engineers',
+    semester: 3,
     unit: 1,
-    unitTitle: 'Finite Automata & Regular Expressions',
-    title: 'Deterministic & Non-Deterministic Finite Automata, Subset Construction',
-    topics: ['Alphabets, Strings & Languages', 'DFA Formal 5-tuple Definition', 'NFA with ε-Transitions', 'Subset Construction Algorithm (NFA to DFA)', 'Regular Expression to Finite Automata', 'Pumping Lemma for Regular Languages'],
-    author: 'Dr. Rajeshwari K.',
-    dateUpdated: '2024-09-24',
-    pages: 64,
-    fileSize: '6.1 MB',
-    summary: 'Theoretical state machine diagrams, transition tables, formal proofs of non-regularity with Pumping Lemma, and DFA state minimization via equivalence partitioning.',
-    contentPreview: [
-      '1. Formal Definition of DFA: 5-tuple M = (Q, Σ, δ, q0, F), where Q is finite states, Σ is alphabet, δ: Q × Σ -> Q is transition function, q0 ∈ Q is initial state, and F ⊆ Q is set of accept states.',
-      '2. Equivalence of DFA and NFA: Every language recognized by an NFA can also be recognized by a DFA. The power set construction may yield up to 2^|Q| states in the worst case.',
-      '3. Pumping Lemma for Regular Languages: If L is regular, there exists a constant p such that any string w ∈ L with |w| >= p can be divided into w = xyz satisfying |y| > 0, |xy| <= p, and xy^i z ∈ L for all i >= 0.'
+    unitTitle: 'Fluid Statics & Flow Measurement Primitives',
+    title: 'Manometry, Differential Head, Bernoulli Theorem & Venturi/Orifice Flow',
+    topics: [
+      'Newtonian vs Non-Newtonian Fluids and Shear Stress-Rate Relationship',
+      'Hydrostatic Equilibrium and Barometric Equation',
+      'U-Tube, Inverted & Two-Fluid Differential Manometers',
+      'Derivation of Bernoulli Equation with Head Loss & Pump Work',
+      'Venturimeter Equation and Discharge Coefficient (C_d)',
+      'Orifice Meter vs Rotameter: Variable Head vs Variable Area'
     ],
-    downloadFileName: '21CS54_Unit1_FiniteAutomata_Rajeshwari.pdf'
-  },
-  {
-    id: 'note-401',
-    subjectCode: '21CS41',
-    subjectName: 'Design & Analysis of Algorithms',
-    semester: 4,
-    unit: 1,
-    unitTitle: 'Asymptotic Analysis & Divide-and-Conquer',
-    title: 'Recurrence Relations, Master Theorem, Merge Sort & Quick Sort',
-    topics: ['Big-O, Big-Omega, Big-Theta Definitions', 'Recursion Tree Method', 'Master Theorem for Divide-and-Conquer', 'QuickSort Partitioning (Lomuto vs Hoare)', 'Strassen Matrix Multiplication', 'Lower Bounds for Comparison Sorting'],
-    author: 'Prof. P. R. Murthy',
-    dateUpdated: '2024-03-14',
+    author: 'Prof. M. B. Patil',
+    dateUpdated: '2024-09-25',
     pages: 48,
-    fileSize: '4.2 MB',
-    summary: 'Formal complexity bounds, step-by-step Master theorem cases, best/worst-case proofs for partition sorting algorithms, and inversion count problems.',
+    fileSize: '4.9 MB',
+    summary: 'Complete engineering fluid mechanics notes with hydrostatic proofs, manometer balancing planes, Bernoulli energy accounting, friction factor charts, and flow meter discharge equations.',
     contentPreview: [
-      '1. Asymptotic Notations: f(n) = O(g(n)) means positive constants c and n0 exist such that 0 <= f(n) <= c*g(n) for all n >= n0.',
-      '2. Master Theorem: T(n) = a*T(n/b) + f(n). Compares f(n) with n^(log_b(a)). Three standard cases govern sub-polynomial, polynomial, and super-polynomial growth.',
-      '3. QuickSort Analysis: Worst case recurrence T(n) = T(n-1) + O(n) giving O(n^2). Average case recurrence yields O(n log n) through expected indicator random variables.'
+      '1. Hydrostatic Principle: Pressure in a continuous static fluid varies only with vertical elevation: dP/dz = -ρ*g. In incompressible fluids, P2 - P1 = -ρ*g*(z2 - z1).',
+      '2. Bernoulli Equation with Energy Corrections: (P1 / ρ) + (α1 * v1^2 / 2) + g * z1 + W_p = (P2 / ρ) + (α2 * v2^2 / 2) + g * z2 + h_f. Where h_f represents total viscous friction loss.',
+      '3. Venturimeter Mechanics: Tapered convergent-divergent duct minimizing separation losses. Theoretical velocity at throat v2 = sqrt[2 * (P1 - P2) / (ρ * (1 - β^4))], where β = d2 / d1. Actual volumetric flow Q = C_d * A2 * v2, with C_d typically 0.96 to 0.98.'
     ],
-    downloadFileName: '21CS41_Unit1_DivideConquer_Murthy.pdf'
+    keyDefinitions: [
+      { term: 'Viscosity (μ)', explanation: 'The physical property measuring a fluid resistance to gradual deformation by shear stress or tensile stress (Pa·s or Poise).' },
+      { term: 'Vena Contracta', explanation: 'The cross-sectional area where the fluid jet diameter is minimum and fluid velocity is maximum, located just downstream of an orifice plate.' }
+    ],
+    importantFormulasOrCode: [
+      'Reynolds Number: Re = (ρ * v * D) / μ = (v * D) / ν',
+      'Bernoulli Head Form: (P1 / γ) + (v1^2 / 2g) + z1 = (P2 / γ) + (v2^2 / 2g) + z2 + h_L',
+      'Darcy-Weisbach Friction Loss: h_f = 4 * f * (L / D) * (v^2 / 2g)',
+      'Orifice Volumetric Flow: Q = C_d * A_0 * sqrt(2 * ΔP / [ρ * (1 - β^4)])'
+    ],
+    downloadFileName: 'SIT_CH32_Unit1_Fluid_Mechanics_Patil.pdf'
   },
   {
-    id: 'note-402',
-    subjectCode: '21CS42',
-    subjectName: 'Operating Systems',
-    semester: 4,
-    unit: 2,
-    unitTitle: 'Process Synchronization & Concurrency',
-    title: 'Critical Section Problem, Peterson Solution, Semaphores, Monitors & Deadlocks',
-    topics: ['Race Conditions', 'Peterson Algorithm Proof', 'Hardware Atomic Instructions (TestAndSet, CAS)', 'Counting & Binary Semaphores', 'Classical Problems: Producer-Consumer, Dining Philosophers', 'Banker Algorithm for Deadlock Avoidance'],
-    author: 'Dr. Sneha Patil',
-    dateUpdated: '2024-04-05',
-    pages: 50,
-    fileSize: '4.7 MB',
-    summary: 'Classic synchronization paradigms, monitor constructs with condition variables, deadlock detection matrices, and resource allocation graphs.',
-    contentPreview: [
-      '1. Critical Section Requirements: Mutual Exclusion (only one process in CS), Progress (selection cannot be postponed indefinitely), Bounded Waiting (limit on times other processes enter CS before request granted).',
-      '2. Semaphores: Integer variable accessible only through atomic wait() [P] and signal() [V] primitives. Counting semaphores control access to a finite resource pool.',
-      '3. Deadlock Necessary Conditions: Mutual Exclusion, Hold and Wait, No Preemption, Circular Wait. All four must hold simultaneously for a deadlock to exist.'
+    id: 'note-ch33-u1',
+    subjectCode: 'CH33-DEMO',
+    subjectName: 'Chemical Process Calculations',
+    semester: 3,
+    unit: 1,
+    unitTitle: 'Ideal Gas Systems, Vapor Pressure & Antoine Constants',
+    title: 'Raoult Law, Antoine Equation, Humidity & Psychrometric Charts',
+    topics: [
+      'Ideal Gas Law (PV = nRT) and Gas Mixtures (Amagat & Dalton Laws)',
+      'Vapor Pressure Estimation via Antoine Equation (log10 P* = A - B / (T + C))',
+      'Raoult Law for Ideal Binary Solutions: P_i = x_i * P_i*',
+      'Relative Humidity, Percentage Humidity & Dew Point Calculation',
+      'Condensation and Vaporization Processes in Evaporators',
+      'Psychrometric Charts and Air-Water System Balances'
     ],
-    downloadFileName: '21CS42_Unit2_Synchronization_Patil.pdf'
+    author: 'Dr. Geetha K.',
+    dateUpdated: '2024-10-08',
+    pages: 40,
+    fileSize: '3.8 MB',
+    summary: 'Principles of chemical process calculations covering ideal gas law applications, partial pressure calculations, psychrometric parameters, and phase equilibrium approximations.',
+    contentPreview: [
+      '1. Gas Mixtures and Partial Pressures: According to Dalton\'s Law, total pressure is the sum of partial pressures: P_total = Σ P_i. For ideal gases, the mole fraction y_i = P_i / P_total.',
+      '2. Vapor Pressure and Antoine Equation: Vapor pressure P* is strongly dependent on temperature. The 3-parameter Antoine correlation accurately fits experimental saturation curves.',
+      '3. Relative Humidity (RH): Ratio of partial pressure of water vapor in air to the saturation vapor pressure of water at the dry-bulb temperature: RH = (p_w / p_w*) * 100%.'
+    ],
+    downloadFileName: 'SIT_CH33_Unit1_Process_Calculations_Geetha.pdf'
+  },
+  {
+    id: 'note-ch34-u1',
+    subjectCode: 'CH34-DEMO',
+    subjectName: 'Technical Chemistry & Instrumental Analysis',
+    semester: 3,
+    unit: 1,
+    unitTitle: 'Spectroscopy, Beer-Lambert Law & Electro-analytical Techniques',
+    title: 'UV-Visible Spectrophotometry, Potentiometry, pH Metry & Conductance',
+    topics: [
+      'Principles of Electromagnetic Absorption in Chemical Bonds',
+      'Beer-Lambert Law (A = ε * b * c) and Limitations of Beer Law',
+      'Instrumentation: Monochromator, Cuvettes & Photomultiplier Detectors',
+      'Potentiometric Titrations: Reference and Indicator Electrodes',
+      'Conductometric Titrations of Strong vs Weak Acids and Bases',
+      'Calibration Curve Construction and Unknown Concentration Determination'
+    ],
+    author: 'Dr. R. N. Murthy',
+    dateUpdated: '2024-09-28',
+    pages: 36,
+    fileSize: '3.4 MB',
+    summary: 'Fundamental physical chemistry and instrumental analysis for chemical engineers, optical instrumentation, calibration protocols, and conductometric endpoint determinations.',
+    contentPreview: [
+      '1. Beer-Lambert Law: When a monochromatic light beam passes through an absorbing medium, intensity decreases exponentially with path length and concentration: log10(I0 / I) = A = ε * b * c.',
+      '2. Deviations from Beer-Lambert Law: Occur at high concentrations (typically > 0.01 M) due to electrostatic interactions between neighboring absorbing species, chemical equilibria shifts, or polychromatic light dispersion.'
+    ],
+    downloadFileName: 'SIT_CH34_Unit1_Technical_Chemistry_Murthy.pdf'
   }
 ];
 
 export const MOCK_QUESTION_PAPERS: QuestionPaperItem[] = [
   {
-    id: 'qp-2024-52',
-    subjectCode: '21CS52',
-    subjectName: 'Computer Networks & Security',
-    semester: 5,
+    id: 'qp-sit-ch31-2024',
+    subjectCode: 'CH31-DEMO',
+    subjectName: 'Material & Energy Balances',
+    semester: 3,
     year: 2024,
     examType: 'Semester End (SEE)',
-    scheme: '2021 Scheme',
-    totalMarks: 100,
-    fileSize: '1.8 MB',
-    hasSolutions: true,
-    sections: [
-      {
-        title: 'Module 1 (Application Layer)',
-        questions: [
-          { qNum: 'Q1 (a)', text: 'Distinguish between client-server and peer-to-peer network architectures with illustrative diagrams.', marks: 8, module: 'Unit 1' },
-          { qNum: 'Q1 (b)', text: 'Explain the working of HTTP persistent and non-persistent connections with Round Trip Time (RTT) timing diagrams.', marks: 12, module: 'Unit 1' },
-          { qNum: 'Q2 (a)', text: 'With a neat sequence diagram, elucidate how an iterative DNS query is resolved for an authorative domain name.', marks: 10, module: 'Unit 1' },
-          { qNum: 'Q2 (b)', text: 'Demonstrate socket programming flow for a connection-oriented TCP client and server with code primitives.', marks: 10, module: 'Unit 1' }
-        ]
-      },
-      {
-        title: 'Module 2 (Transport Layer)',
-        questions: [
-          { qNum: 'Q3 (a)', text: 'Explain the Go-Back-N (GBN) sliding window protocol with sender and receiver finite state machines.', marks: 10, module: 'Unit 2' },
-          { qNum: 'Q3 (b)', text: 'Calculate the TCP timeout interval given SampleRTT = 28ms, EstimatedRTT = 24ms, and DevRTT = 4ms. Show formula steps.', marks: 10, module: 'Unit 2' },
-          { qNum: 'Q4 (a)', text: 'Compare TCP Reno and TCP Tahoe congestion control algorithms during timeout and triple duplicate ACK states.', marks: 12, module: 'Unit 2' }
-        ]
-      }
-    ],
-    downloadFileName: '21CS52_SEE_Jan2024_Paper.pdf'
-  },
-  {
-    id: 'qp-2023-52',
-    subjectCode: '21CS52',
-    subjectName: 'Computer Networks & Security',
-    semester: 5,
-    year: 2023,
-    examType: 'Semester End (SEE)',
-    scheme: '2021 Scheme',
-    totalMarks: 100,
-    fileSize: '1.6 MB',
-    hasSolutions: true,
-    sections: [
-      {
-        title: 'Module 1 & 2',
-        questions: [
-          { qNum: 'Q1', text: 'Derive the total nodal delay formula and explain transmission vs propagation delay with a numerical example.', marks: 10, module: 'Unit 1' },
-          { qNum: 'Q2', text: 'Elucidate TCP 3-way handshake mechanism and 4-way connection teardown with segment sequence numbers.', marks: 10, module: 'Unit 2' },
-          { qNum: 'Q3', text: 'Describe Selective Repeat protocol and discuss why the window size must be less than or equal to half the sequence space.', marks: 10, module: 'Unit 2' }
-        ]
-      }
-    ],
-    downloadFileName: '21CS52_SEE_Jan2023_Paper.pdf'
-  },
-  {
-    id: 'qp-2024-53',
-    subjectCode: '21CS53',
-    subjectName: 'Database Management Systems',
-    semester: 5,
-    year: 2024,
-    examType: 'Semester End (SEE)',
-    scheme: '2021 Scheme',
-    totalMarks: 100,
-    fileSize: '2.1 MB',
-    hasSolutions: true,
-    sections: [
-      {
-        title: 'Module 1 & 2',
-        questions: [
-          { qNum: 'Q1 (a)', text: 'Construct an ER diagram for a Hospital Management System showing cardinalities, weak entities, and composite attributes.', marks: 12, module: 'Unit 1' },
-          { qNum: 'Q1 (b)', text: 'Define the fundamental operations in relational algebra with algebraic expressions and examples.', marks: 8, module: 'Unit 1' },
-          { qNum: 'Q2 (a)', text: 'Write SQL queries using correlated subqueries, LEFT OUTER JOIN, and GROUP BY HAVING clauses on a schema.', marks: 10, module: 'Unit 2' }
-        ]
-      },
-      {
-        title: 'Module 3 (Normalization)',
-        questions: [
-          { qNum: 'Q3 (a)', text: 'Given relation R(A, B, C, D, E) and FDs {A->BC, CD->E, B->D, E->A}, find candidate keys and determine normal form.', marks: 12, module: 'Unit 3' },
-          { qNum: 'Q3 (b)', text: 'State Armstrong axioms. Prove the pseudo-transitivity rule using the inference axioms.', marks: 8, module: 'Unit 3' }
-        ]
-      }
-    ],
-    downloadFileName: '21CS53_SEE_Feb2024_Paper.pdf'
-  },
-  {
-    id: 'qp-2023-53',
-    subjectCode: '21CS53',
-    subjectName: 'Database Management Systems',
-    semester: 5,
-    year: 2023,
-    examType: 'Semester End (SEE)',
-    scheme: '2021 Scheme',
-    totalMarks: 100,
-    fileSize: '1.9 MB',
-    hasSolutions: false,
-    sections: [
-      {
-        title: 'All Modules',
-        questions: [
-          { qNum: 'Q1', text: 'Explain 3-tier ANSI SPARC database architecture and data independence (Physical and Logical).', marks: 10, module: 'Unit 1' },
-          { qNum: 'Q2', text: 'Compute canonical cover for F = {A->BC, B->C, A->B, AB->C}. Verify step by step.', marks: 10, module: 'Unit 3' }
-        ]
-      }
-    ],
-    downloadFileName: '21CS53_SEE_Jan2023_Paper.pdf'
-  },
-  {
-    id: 'qp-2024-41',
-    subjectCode: '21CS41',
-    subjectName: 'Design & Analysis of Algorithms',
-    semester: 4,
-    year: 2024,
-    examType: 'Semester End (SEE)',
-    scheme: '2021 Scheme',
+    scheme: 'SIT Autonomous Scheme (Demo)',
     totalMarks: 100,
     fileSize: '1.7 MB',
     hasSolutions: true,
     sections: [
       {
-        title: 'Module 1 & 2',
+        title: 'Module 1: Material Balances without Reactions',
         questions: [
-          { qNum: 'Q1 (a)', text: 'State and prove the Master theorem for divide-and-conquer recurrences with all three canonical cases.', marks: 10, module: 'Unit 1' },
-          { qNum: 'Q1 (b)', text: 'Write the QuickSort algorithm with Hoare partition scheme and trace on array [35, 12, 67, 44, 28, 9, 81].', marks: 10, module: 'Unit 1' },
-          { qNum: 'Q2 (a)', text: 'Solve 0/1 Knapsack problem using dynamic programming with capacity W = 8 and items given.', marks: 10, module: 'Unit 3' }
+          {
+            qNum: 'Q1 (a)',
+            text: 'A wet paper pulp contains 71 wt% water. It is passed through a continuous drier which removes 80% of the original water. Calculate the weight of dried pulp obtained per 1000 kg of fresh feed and the moisture content (wt% water) of the final product.',
+            marks: 10,
+            module: 'Unit 1'
+          },
+          {
+            qNum: 'Q1 (b)',
+            text: 'Define Tie Substance and Degrees of Freedom. Explain the systematic methodology of degrees of freedom analysis for multi-unit chemical plant flowsheets.',
+            marks: 10,
+            module: 'Unit 1'
+          },
+          {
+            qNum: 'Q2 (a)',
+            text: 'Fresh feed containing 20% KNO3 in water enters an evaporator-crystallizer system. The recycle stream contains 0.6 kg KNO3 per kg water. Calculate the recycle ratio and production rate of dry KNO3 crystals.',
+            marks: 12,
+            module: 'Unit 1'
+          },
+          {
+            qNum: 'Q2 (b)',
+            text: 'Why is a purge stream necessary in a recycle loop containing inert components? Derive a relation showing the effect of purge fraction on steady-state inert accumulation.',
+            marks: 8,
+            module: 'Unit 1'
+          }
+        ]
+      },
+      {
+        title: 'Module 2: Stoichiometry & Combustion',
+        questions: [
+          {
+            qNum: 'Q3 (a)',
+            text: 'A fuel gas containing 85% CH4, 10% C2H6 and 5% N2 by volume is burned with 20% excess air. If 90% of the methane burns to CO2 and 10% to CO, calculate the Orsat analysis (dry basis) of the flue gas.',
+            marks: 12,
+            module: 'Unit 2'
+          },
+          {
+            qNum: 'Q3 (b)',
+            text: 'Distinguish between conversion, yield, and selectivity in chemical reactors with mathematical formulations.',
+            marks: 8,
+            module: 'Unit 2'
+          }
         ]
       }
     ],
-    downloadFileName: '21CS41_SEE_July2024_Paper.pdf'
+    downloadFileName: 'SIT_SEE_2024_CH31_Material_Balances.pdf'
   },
   {
-    id: 'qp-2022-54',
-    subjectCode: '21CS54',
-    subjectName: 'Automata Theory & Computability',
-    semester: 5,
-    year: 2022,
+    id: 'qp-sit-ch31-2023',
+    subjectCode: 'CH31-DEMO',
+    subjectName: 'Material & Energy Balances',
+    semester: 3,
+    year: 2023,
     examType: 'Semester End (SEE)',
-    scheme: '2018 Scheme',
+    scheme: 'SIT Autonomous Scheme (Demo)',
     totalMarks: 100,
     fileSize: '1.5 MB',
     hasSolutions: true,
     sections: [
       {
-        title: 'Module 1',
+        title: 'Module 1 & 2',
         questions: [
-          { qNum: 'Q1', text: 'Design DFA to accept all binary strings containing the substring 101 or ending with 00.', marks: 10, module: 'Unit 1' },
-          { qNum: 'Q2', text: 'Using Pumping Lemma, prove that language L = {a^n b^n | n >= 0} is not regular.', marks: 10, module: 'Unit 1' }
+          {
+            qNum: 'Q1',
+            text: 'A distillation column separates a 10,000 kg/h feed consisting of 50 wt% benzene and 50 wt% toluene. Distillate contains 95 wt% benzene and bottoms contains 96 wt% toluene. Calculate the distillate and residue mass flow rates.',
+            marks: 10,
+            module: 'Unit 1'
+          },
+          {
+            qNum: 'Q2',
+            text: 'Write atomic balances for an ammonia synthesis reactor feed of N2 and H2. Show how extent of reaction is determined.',
+            marks: 10,
+            module: 'Unit 2'
+          }
         ]
       }
     ],
-    downloadFileName: '21CS54_SEE_Jan2022_Paper.pdf'
+    downloadFileName: 'SIT_SEE_2023_CH31_Material_Balances.pdf'
+  },
+  {
+    id: 'qp-sit-ch32-2024',
+    subjectCode: 'CH32-DEMO',
+    subjectName: 'Fluid Mechanics for Chemical Engineers',
+    semester: 3,
+    year: 2024,
+    examType: 'Semester End (SEE)',
+    scheme: 'SIT Autonomous Scheme (Demo)',
+    totalMarks: 100,
+    fileSize: '1.9 MB',
+    hasSolutions: true,
+    sections: [
+      {
+        title: 'Module 1: Fluid Statics & Fluid Dynamics',
+        questions: [
+          {
+            qNum: 'Q1 (a)',
+            text: 'Derive Bernoulli equation from Euler equation of motion stating all underlying assumptions. What corrections are necessary for real viscous fluids and pump inputs?',
+            marks: 10,
+            module: 'Unit 1'
+          },
+          {
+            qNum: 'Q1 (b)',
+            text: 'Water flows through a 100 mm diameter horizontal pipe connected to a 50 mm throat Venturimeter. The differential mercury manometer reading is 250 mm. Calculate the mass flow rate of water (Take C_d = 0.98).',
+            marks: 10,
+            module: 'Unit 1'
+          },
+          {
+            qNum: 'Q2 (a)',
+            text: 'Derive the Hagen-Poiseuille equation for steady, laminar flow of an incompressible Newtonian fluid through a circular horizontal pipe.',
+            marks: 12,
+            module: 'Unit 2'
+          }
+        ]
+      }
+    ],
+    downloadFileName: 'SIT_SEE_2024_CH32_Fluid_Mechanics.pdf'
+  },
+  {
+    id: 'qp-sit-ch33-2024',
+    subjectCode: 'CH33-DEMO',
+    subjectName: 'Chemical Process Calculations',
+    semester: 3,
+    year: 2024,
+    examType: 'Model Question Paper',
+    scheme: 'SIT Autonomous Scheme (Demo)',
+    totalMarks: 100,
+    fileSize: '1.4 MB',
+    hasSolutions: false,
+    sections: [
+      {
+        title: 'Module 1: Gas Laws & Vapor Pressure',
+        questions: [
+          {
+            qNum: 'Q1',
+            text: 'Using Antoine equation, calculate the bubble point temperature and vapor composition of an equimolar liquid mixture of benzene and toluene at 1 atm total pressure.',
+            marks: 12,
+            module: 'Unit 1'
+          },
+          {
+            qNum: 'Q2',
+            text: 'Explain humidity, percentage saturation, and wet-bulb temperature. How is psychrometric chart used in cooling tower design?',
+            marks: 8,
+            module: 'Unit 1'
+          }
+        ]
+      }
+    ],
+    downloadFileName: 'SIT_Model_2024_CH33_Process_Calculations.pdf'
   }
 ];
 
 export const MOCK_LAB_MANUALS: LabManualItem[] = [
   {
-    id: 'lab-56',
-    courseCode: '21CSL56',
-    courseName: 'Database Applications & Web Development Lab',
-    semester: 5,
-    labIncharge: 'Dr. Anita Deshmukh & Prof. Raghavendra',
+    id: 'lab-ch36',
+    courseCode: 'CHL36-DEMO',
+    courseName: 'Fluid Flow Operations Laboratory',
+    semester: 3,
+    labIncharge: 'Prof. M. B. Patil & Mr. Chethan',
     totalExperiments: 6,
-    fileSize: '8.4 MB',
-    softwareRequired: ['MySQL Server 8.0', 'Node.js / Express', 'PostgreSQL', 'VS Code', 'Git'],
+    fileSize: '7.8 MB',
+    softwareRequired: ['Fluid Mechanics Flow Test Rig', 'Python 3 (NumPy/Matplotlib)', 'Manometer Fluids (Mercury & CCl4)', 'Digital Stopwatches'],
     objectives: [
-      'Master schema definition, complex joins, triggers, and stored procedures in relational DBMS.',
-      'Build end-to-end full-stack web applications binding database transactions with REST API controllers.',
-      'Understand transaction isolation levels, indexing performance, and parameterized security against SQL injection.'
+      'Calibrate flow measurement instruments (Venturimeter, Orifice meter, Rotameter) and compute discharge coefficients (C_d).',
+      'Determine major friction losses in circular conduits and plot Darcy friction factor vs Reynolds number in Moody chart.',
+      'Visualize fluid flow regimes (laminar, transition, and turbulent) using Reynolds dye injection apparatus.'
     ],
     experiments: [
       {
         number: 1,
-        title: 'Library Management Database & Relational Queries',
-        objective: 'Design and implement an ER model, map to relational tables with appropriate PK/FK constraints, and execute nested subqueries and joins.',
-        prerequisites: 'Basic SQL DDL/DML, Foreign Key Cascade Rules',
+        title: 'Calibration of Venturimeter & Orifice Meter',
+        objective: 'Determine coefficient of discharge (C_d) for a Venturimeter and an Orifice meter across varying volumetric flow rates of water.',
+        prerequisites: 'Bernoulli Theorem, U-tube Manometry, Continuity Equation',
         algorithmSteps: [
-          'Create tables: BOOK, BOOK_AUTHORS, PUBLISHER, BOOK_COPIES, BOOK_LENDING, LIBRARY_BRANCH.',
-          'Enforce primary keys, not-null constraints, and on-delete cascade foreign key associations.',
-          'Populate test records representing at least 5 branches and 10 titles.',
-          'Execute query: Retrieve book titles authored by a specific author and loaned between specific dates.'
+          'Verify inlet and outlet valves are open; prime pump to remove air trapped in manometer limb tubes.',
+          'Adjust flow control valve to obtain an initial manometer deflection (Δh = 5 to 20 cm Hg).',
+          'Measure time required to collect a known volume of water (e.g., 10 liters) in the volumetric collection tank using a stopwatch.',
+          'Calculate actual discharge Q_act = Volume collected / Time taken.',
+          'Calculate theoretical discharge Q_theo = [A1 * A2 / sqrt(A1^2 - A2^2)] * sqrt(2 * g * Δh_water).',
+          'Determine C_d = Q_act / Q_theo. Repeat for 5 different flow rates and plot Q_act vs sqrt(Δh).'
         ],
-        codeLanguage: 'sql',
-        sampleCodeSnippet: `-- Experiment 1: Schema creation & nested analytical query
-CREATE TABLE PUBLISHER (
-  Name VARCHAR(50) PRIMARY KEY,
-  Address VARCHAR(100),
-  Phone VARCHAR(15)
-);
+        codeLanguage: 'python',
+        sampleCodeSnippet: `# Python verification of Venturi & Orifice Discharge Coefficient
+import math
 
-CREATE TABLE BOOK (
-  Book_id INT PRIMARY KEY,
-  Title VARCHAR(100) NOT NULL,
-  Publisher_Name VARCHAR(50) REFERENCES PUBLISHER(Name) ON DELETE CASCADE
-);
+def calculate_cd(d1_mm, d2_mm, delta_h_hg_cm, vol_liters, time_seconds):
+    # Dimensions in meters
+    d1 = d1_mm / 1000.0
+    d2 = d2_mm / 1000.0
+    a1 = (math.pi / 4.0) * (d1 ** 2)
+    a2 = (math.pi / 4.0) * (d2 ** 2)
+    
+    # Differential head in meters of water (Mercury sp.gr = 13.6)
+    delta_h_m_hg = delta_h_hg_cm / 100.0
+    h_water = delta_h_m_hg * (13.6 - 1.0)
+    
+    g = 9.81  # m/s^2
+    q_actual = (vol_liters / 1000.0) / time_seconds  # m^3/s
+    q_theoretical = (a1 * a2 / math.sqrt(a1**2 - a2**2)) * math.sqrt(2 * g * h_water)
+    
+    cd = q_actual / q_theoretical
+    return q_actual, q_theoretical, cd
 
-CREATE TABLE BOOK_COPIES (
-  Book_id INT REFERENCES BOOK(Book_id) ON DELETE CASCADE,
-  Branch_id INT,
-  No_of_Copies INT CHECK (No_of_Copies >= 0),
-  PRIMARY KEY (Book_id, Branch_id)
-);
-
--- Retrieve book titles authored by 'Navathe' having > 2 copies in Central Branch
-SELECT B.Title, BC.No_of_Copies 
-FROM BOOK B 
-JOIN BOOK_COPIES BC ON B.Book_id = BC.Book_id
-JOIN BOOK_AUTHORS BA ON B.Book_id = BA.Book_id
-WHERE BA.Author_Name = 'Navathe' AND BC.Branch_id = 101;`,
-        expectedOutput: `+----------------------------------+--------------+
-| Title                            | No_of_Copies |
-+----------------------------------+--------------+
-| Fundamentals of Database Systems | 5            |
-| Database System Concepts         | 3            |
-+----------------------------------+--------------+`,
+# Test case: 25mm pipe, 12.5mm throat, 15cm Hg manometer reading, 10L in 28.4s
+q_act, q_th, cd = calculate_cd(25, 12.5, 15.0, 10.0, 28.4)
+print(f"Actual Flow: {q_act*1000:.3f} L/s")
+print(f"Theoretical Flow: {q_th*1000:.3f} L/s")
+print(f"Coefficient of Discharge (Cd): {cd:.4f}")`,
+        expectedOutput: `Actual Flow: 0.352 L/s
+Theoretical Flow: 0.363 L/s
+Coefficient of Discharge (Cd): 0.9697
+Conclusion: Cd lies within standard Venturi calibration range (0.96 - 0.98).`,
         vivaQuestions: [
-          { question: 'What happens when ON DELETE CASCADE is omitted and parent row is deleted?', answer: 'The database engine raises a foreign key constraint violation error and halts deletion.' },
-          { question: 'Why is an index recommended on foreign key columns?', answer: 'Because foreign key joins occur frequently and lack of indexing triggers sequential table scans.' }
+          {
+            question: 'Why is the coefficient of discharge for an Orifice meter significantly lower than that of a Venturimeter?',
+            answer: 'Because of sudden contraction at the orifice plate causing severe eddy formation and boundary layer separation at the vena contracta, dissipating pressure energy as turbulent friction (Cd ≈ 0.62 vs 0.98 for Venturi).'
+          },
+          {
+            question: 'Why is the divergent cone angle of a Venturi meter kept smaller (5° - 7°) than convergent angle (20°)?',
+            answer: 'To prevent boundary layer separation and flow stall against the adverse pressure gradient in decelerating fluid flow.'
+          }
         ]
       },
       {
         number: 2,
-        title: 'Automated Inventory Update using SQL Triggers',
-        objective: 'Write and test a database trigger that automatically decrements stock count whenever a sale transaction is committed, raising exceptions on negative stock.',
-        prerequisites: 'PL/SQL triggers, BEFORE vs AFTER row triggers',
+        title: 'Reynolds Experiment & Determination of Critical Velocity',
+        objective: 'Observe laminar, transitional, and turbulent flow patterns of water with dye filament injection and evaluate lower and upper critical Reynolds numbers.',
+        prerequisites: 'Viscous shear, kinematic viscosity, dye stream stability',
         algorithmSteps: [
-          'Define PRODUCTS table with StockQty and ORDERS table.',
-          'Write a BEFORE INSERT trigger on ORDERS checking if requested quantity exceeds current StockQty.',
-          'If stock is insufficient, signal SQLSTATE exception with custom error message.',
-          'If valid, update PRODUCTS table reducing StockQty by NEW.Quantity.'
+          'Fill constant-head water tank and allow water to become quiescent without surface oscillations.',
+          'Partially open glass tube discharge valve to initiate slow, steady flow.',
+          'Open dye reservoir needle valve to introduce a thin central filament of potassium permanganate.',
+          'Observe stable thread line (Laminar regime: Re < 2100).',
+          'Gradually increase discharge until dye begins wavy fluctuations (Transition) and finally diffuses completely across the entire tube cross section (Turbulent regime: Re > 4000).'
         ],
-        codeLanguage: 'sql',
-        sampleCodeSnippet: `DELIMITER $$
-CREATE TRIGGER trg_verify_and_update_stock
-BEFORE INSERT ON ORDERS
-FOR EACH ROW
-BEGIN
-  DECLARE available_qty INT;
-  SELECT StockQty INTO available_qty 
-  FROM PRODUCTS WHERE ProductId = NEW.ProductId;
-  
-  IF available_qty < NEW.OrderQty THEN
-    SIGNAL SQLSTATE '45000' 
-    SET MESSAGE_TEXT = 'Order denied: Insufficient inventory stock!';
-  ELSE
-    UPDATE PRODUCTS 
-    SET StockQty = StockQty - NEW.OrderQty 
-    WHERE ProductId = NEW.ProductId;
-  END IF;
-END$$
-DELIMITER ;`,
-        expectedOutput: `Query OK, 0 rows affected (0.02 sec)
-Trigger 'trg_verify_and_update_stock' compiled successfully.`,
+        codeLanguage: 'python',
+        sampleCodeSnippet: `# Reynolds Number Regime Classifier
+def classify_flow(velocity_ms, diameter_mm, temperature_c=25):
+    # Dynamic viscosity of water at 25C: 0.89 x 10^-3 Pa.s, density: 997 kg/m^3
+    rho = 997.0
+    mu = 0.89e-3
+    D = diameter_mm / 1000.0
+    
+    reynolds = (rho * velocity_ms * D) / mu
+    if reynolds < 2100:
+        regime = "Laminar Flow (Stable streamline)"
+    elif 2100 <= reynolds <= 4000:
+        regime = "Transitional Flow (Intermittent eddies)"
+    else:
+        regime = "Turbulent Flow (Complete dye dispersal)"
+    return reynolds, regime
+
+re, reg = classify_flow(0.12, 20.0)
+print(f"Re: {re:.1f} -> {reg}")`,
+        expectedOutput: `Re: 2688.5 -> Transitional Flow (Intermittent eddies)
+Thresholds: Lower critical Re = 2100, Upper critical Re = 4000`,
         vivaQuestions: [
-          { question: 'What is the distinction between statement-level and row-level triggers?', answer: 'Row-level triggers execute once for each affected tuple (FOR EACH ROW), whereas statement-level triggers fire once per SQL operation.' },
-          { question: 'Can a BEFORE trigger mutate values in the NEW pseudorecord?', answer: 'Yes, in a BEFORE trigger you can assign NEW.column_name := value before persistence.' }
+          {
+            question: 'What is the physical meaning of Reynolds number?',
+            answer: 'It represents the dimensionless ratio of fluid Inertial forces to Viscous forces (ρ v D / μ).'
+          }
         ]
       },
       {
         number: 3,
-        title: 'RESTful API with Parameterized Queries & Express.js',
-        objective: 'Implement secure REST endpoints to perform CRUD operations on student academic records avoiding SQL injection attacks.',
-        prerequisites: 'Node.js, Express, pg / mysql2 connection pool',
+        title: 'Determination of Friction Factor in Circular Pipes',
+        objective: 'Measure major frictional head loss in smooth and rough pipes and verify Darcy-Weisbach equation and Colebrook correlation.',
+        prerequisites: 'Darcy friction formula, pipe roughness, Moody diagram',
         algorithmSteps: [
-          'Initialize Express router with GET, POST, PUT, DELETE routes.',
-          'Establish connection pool with connection limits.',
-          'Use parameterized place-holders ($1, $2 or ?) to ensure payload inputs are never concatenated directly into query strings.',
-          'Return consistent JSON responses with appropriate HTTP status codes (200, 201, 400, 404, 500).'
+          'Select test pipe conduit and record length between differential pressure taps (L = 2.0 m).',
+          'Vary fluid velocity through test section across 6 increments.',
+          'Record manometer differential pressure drop (Δh) for each velocity.',
+          'Calculate friction factor f = (2 * g * D * h_f) / (4 * L * v^2).',
+          'Compare experimental friction factor with theoretical Moody chart value.'
         ],
-        codeLanguage: 'typescript',
-        sampleCodeSnippet: `import express, { Request, Response } from 'express';
-import { Pool } from 'pg';
+        codeLanguage: 'python',
+        sampleCodeSnippet: `# Darcy Friction Factor calculation
+def calculate_darcy_f(head_loss_m, length_m, diameter_m, velocity_ms):
+    g = 9.81
+    # Darcy-Weisbach: h_f = 4 * f * (L/D) * (v^2 / 2g)
+    f = (2 * g * diameter_m * head_loss_m) / (4 * length_m * (velocity_ms ** 2))
+    return f
 
-const router = express.Router();
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-// Secure parameterized search
-router.get('/students/:usn', async (req: Request, res: Response) => {
-  const { usn } = req.params;
-  try {
-    const result = await pool.query(
-      'SELECT usn, name, semester, department, cgpa FROM students WHERE usn = $1',
-      [usn]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Student USN record not found' });
-    }
-    return res.status(200).json({ data: result.rows[0] });
-  } catch (err) {
-    return res.status(500).json({ error: 'Database execution failed' });
-  }
-});`,
-        expectedOutput: `HTTP/1.1 200 OK
-Content-Type: application/json
-{
-  "data": {
-    "usn": "1MS21CS042",
-    "name": "Aditya Sharma",
-    "semester": 5,
-    "department": "CSE",
-    "cgpa": 9.18
-  }
-}`,
+f_exp = calculate_darcy_f(0.24, 2.0, 0.025, 1.4)
+print(f"Calculated Darcy Friction Factor f: {f_exp:.5f}")`,
+        expectedOutput: `Calculated Darcy Friction Factor f: 0.00751
+Standard commercial steel pipe value in turbulent regime: 0.007 - 0.008.`,
         vivaQuestions: [
-          { question: 'How do parameterized queries prevent SQL Injection?', answer: 'The database treats parameterized values strictly as data literals during query plan compilation, making code injection impossible.' }
+          {
+            question: 'What is the difference between Fanning friction factor and Darcy-Weisbach friction factor?',
+            answer: 'Darcy friction factor (f_D) is four times the Fanning friction factor (f_F): f_D = 4 * f_F.'
+          }
         ]
       }
     ],
-    downloadFileName: '21CSL56_DBMS_Web_Lab_Manual_2024.pdf'
+    downloadFileName: 'SIT_CHL36_Fluid_Flow_Lab_Manual_2024.pdf'
   },
   {
-    id: 'lab-57',
-    courseCode: '21CSL57',
-    courseName: 'Computer Networks Laboratory',
-    semester: 5,
-    labIncharge: 'Prof. K. Venkatesh & Mrs. Divya',
-    totalExperiments: 6,
-    fileSize: '6.7 MB',
-    softwareRequired: ['NS-2 / NS-3 Network Simulator', 'Wireshark', 'GCC / C++ Compiler', 'Python 3 Socket API'],
+    id: 'lab-ch37',
+    courseCode: 'CHL37-DEMO',
+    courseName: 'Technical Chemistry Laboratory',
+    semester: 3,
+    labIncharge: 'Dr. R. N. Murthy & Mrs. Kavya',
+    totalExperiments: 4,
+    fileSize: '5.2 MB',
+    softwareRequired: ['UV-Vis Spectrophotometer', 'Digital pH Meter', 'Conductometer', 'Standard Analytical Glassware'],
     objectives: [
-      'Simulate point-to-point and LAN networks using NS2/NS3 network simulation scripts.',
-      'Analyze TCP vs UDP throughput, packet loss, and queue congestion graphs.',
-      'Implement CRC error detection, Bellman-Ford, and Dijkstra routing algorithms in C/C++.'
+      'Perform instrumental analytical evaluations including spectrophotometry, potentiometry, and conductometry.',
+      'Determine unknown concentrations of heavy metal ions (Copper, Iron) using Beer-Lambert calibration curves.'
     ],
     experiments: [
       {
         number: 1,
-        title: 'CRC (Cyclic Redundancy Check) Error Detection',
-        objective: 'Implement CRC 16-bit generator polynomial to compute frame check sequence (FCS) at sender and detect bit corruption at receiver.',
-        prerequisites: 'Binary polynomial division, modulo-2 arithmetic, XOR operations',
+        title: 'Colorimetric Determination of Copper in Solution',
+        objective: 'Construct a Beer-Lambert calibration curve using standard cupric-ammonia complex solutions and find unknown copper concentration.',
+        prerequisites: 'Beer-Lambert Law, Complexation Chemistry, Spectrophotometric Blank',
         algorithmSteps: [
-          'Read dataword bit string and predefined divisor generator polynomial (e.g. CRC-CCITT: 10001000000100001).',
-          'Append (k-1) zero bits to the dataword, where k is generator length.',
-          'Perform bitwise modulo-2 division using binary XOR operations.',
-          'Replace appended zeros with the computed remainder to form transmitted codeword.',
-          'At receiver, divide received codeword by generator. Zero remainder confirms error-free reception.'
+          'Prepare stock CuSO4 solution (0.01 M) and standard aliquots (2, 4, 6, 8, 10 mL).',
+          'Add 5 mL of concentrated ammonia to each aliquot to form deep blue cuprammonium complex [Cu(NH3)4]^2+.',
+          'Dilute to 50 mL mark in volumetric flasks with distilled water.',
+          'Measure absorbance at λ_max = 620 nm against a reagent blank.',
+          'Plot Absorbance vs Concentration and evaluate unknown sample concentration from calibration line.'
         ],
-        codeLanguage: 'cpp',
-        sampleCodeSnippet: `#include <iostream>
-#include <string>
-using namespace std;
+        codeLanguage: 'python',
+        sampleCodeSnippet: `# Beer-Lambert Linear Regression
+import numpy as np
 
-string xorOperation(string a, string b) {
-  string result = "";
-  for (size_t i = 1; i < b.length(); i++) {
-    result += (a[i] == b[i]) ? '0' : '1';
-  }
-  return result;
-}
+# Standard concentrations (mg/L) and recorded Absorbances
+concentrations = np.array([20, 40, 60, 80, 100])
+absorbances = np.array([0.142, 0.285, 0.428, 0.571, 0.715])
 
-string modulo2Division(string dividend, string divisor) {
-  int pick = divisor.length();
-  string tmp = dividend.substr(0, pick);
-  int n = dividend.length();
-  
-  while (pick < n) {
-    if (tmp[0] == '1')
-      tmp = xorOperation(divisor, tmp) + dividend[pick];
-    else
-      tmp = xorOperation(string(divisor.length(), '0'), tmp) + dividend[pick];
-    pick += 1;
-  }
-  if (tmp[0] == '1')
-    tmp = xorOperation(divisor, tmp);
-  else
-    tmp = xorOperation(string(divisor.length(), '0'), tmp);
-  return tmp;
-}`,
-        expectedOutput: `Enter Dataword: 11010011101100
-Generator Polynomial: 1011
-Computed CRC Remainder Checksum: 010
-Transmitted Codeword: 11010011101100010
-Receiver Test: No errors detected. Remainder: 000`,
+# Linear fit: Abs = slope * conc
+slope, intercept = np.polyfit(concentrations, absorbances, 1)
+
+unknown_absorbance = 0.490
+unknown_conc = (unknown_absorbance - intercept) / slope
+print(f"Calibration Slope: {slope:.5f}")
+print(f"Unknown Copper Concentration: {unknown_conc:.2f} mg/L")`,
+        expectedOutput: `Calibration Slope: 0.00714
+Unknown Copper Concentration: 68.62 mg/L
+Regression R^2: 0.9999`,
         vivaQuestions: [
-          { question: 'What types of errors does CRC reliably detect?', answer: 'All single-bit errors, all double-bit errors (with appropriate polynomial), odd number of errors, and burst errors of length <= generator degree.' }
-        ]
-      },
-      {
-        number: 2,
-        title: 'Bellman-Ford Distance Vector Routing Algorithm',
-        objective: 'Implement Distance Vector routing protocol calculating minimum-cost forwarding paths from source to all destinations in a weighted graph.',
-        prerequisites: 'Graph representations, relaxation technique, dynamic programming',
-        algorithmSteps: [
-          'Initialize distance array dist[V] to infinity, dist[source] = 0.',
-          'Relax all edges (V - 1) times: if dist[u] + weight(u, v) < dist[v] then dist[v] = dist[u] + weight(u, v).',
-          'Run a V-th iteration to check for negative-weight cycles.',
-          'Print final routing table showing destination and shortest distance.'
-        ],
-        codeLanguage: 'cpp',
-        sampleCodeSnippet: `// Bellman-Ford algorithm core relaxation loop
-for (int i = 1; i <= V - 1; ++i) {
-  for (int j = 0; j < E; ++j) {
-    int u = edges[j].src;
-    int v = edges[j].dest;
-    int weight = edges[j].weight;
-    if (dist[u] != INT_MAX && dist[u] + weight < dist[v]) {
-      dist[v] = dist[u] + weight;
-    }
-  }
-}`,
-        expectedOutput: `Routing Table for Node A:
-Destination | Distance | Next Hop
-Node B      | 2        | B
-Node C      | 5        | B
-Node D      | 7        | D
-Node E      | 9        | B`,
-        vivaQuestions: [
-          { question: 'What is the Count-to-Infinity problem in Distance Vector routing?', answer: 'Routing loops occur when a link fails, causing adjacent nodes to iteratively increment hop counts infinitely until metric reaches infinity threshold.' }
+          {
+            question: 'Why is ammonia added to copper sulfate solution in colorimetry?',
+            answer: 'Copper ions alone have very pale blue color with low molar absorptivity; complexation with ammonia forms intense deep blue [Cu(NH3)4]^2+ complex, significantly enhancing detection sensitivity.'
+          }
         ]
       }
     ],
-    downloadFileName: '21CSL57_Networks_Lab_Manual_2024.pdf'
-  },
-  {
-    id: 'lab-46',
-    courseCode: '21CSL46',
-    courseName: 'Algorithms Laboratory',
-    semester: 4,
-    labIncharge: 'Prof. P. R. Murthy',
-    totalExperiments: 8,
-    fileSize: '5.9 MB',
-    softwareRequired: ['GCC / Clang', 'Gnuplot for runtime curves', 'Linux Environment'],
-    objectives: [
-      'Empirically evaluate asymptotic time complexity across varying input sizes n.',
-      'Implement Greedy, Divide-and-Conquer, Dynamic Programming, and Backtracking algorithms.'
-    ],
-    experiments: [
-      {
-        number: 1,
-        title: 'Kruskal Minimum Spanning Tree using Disjoint Sets',
-        objective: 'Find the Minimum Spanning Tree of an undirected weighted network graph using Union-Find by rank with path compression.',
-        prerequisites: 'Disjoint Set Union (DSU), Greedy paradigm, Edge sorting',
-        algorithmSteps: [
-          'Sort all edges in non-decreasing order of their weights.',
-          'Initialize disjoint set parent pointers for each vertex.',
-          'Iterate through sorted edges: if find(u) != find(v), add edge to MST and union sets.',
-          'Repeat until (V - 1) edges are included in MST.'
-        ],
-        codeLanguage: 'cpp',
-        sampleCodeSnippet: `struct Edge { int src, dest, weight; };
-
-int findParent(int node, vector<int>& parent) {
-  if (node == parent[node]) return node;
-  return parent[node] = findParent(parent[node], parent); // Path compression
-}
-
-void unionSets(int u, int v, vector<int>& parent, vector<int>& rank) {
-  u = findParent(u, parent);
-  v = findParent(v, parent);
-  if (rank[u] < rank[v]) parent[u] = v;
-  else if (rank[u] > rank[v]) parent[v] = u;
-  else { parent[v] = u; rank[u]++; }
-}`,
-        expectedOutput: `MST Edges Included:
-Edge (1, 2) Weight = 1
-Edge (2, 3) Weight = 2
-Edge (3, 4) Weight = 3
-Total Minimum Spanning Tree Weight: 6`,
-        vivaQuestions: [
-          { question: 'What is the worst-case time complexity of Kruskal algorithm?', answer: 'O(E log E) or O(E log V) dominated by sorting the edges.' }
-        ]
-      }
-    ],
-    downloadFileName: '21CSL46_Algorithms_Lab_Manual_2024.pdf'
+    downloadFileName: 'SIT_CHL37_Technical_Chemistry_Lab_Manual_2024.pdf'
   }
 ];
 
 export const MOCK_ANNOUNCEMENTS: AnnouncementItem[] = [
   {
-    id: 'ann-1',
-    title: 'Commencement of 5th Semester Lab Internal Assessments (CIE-2)',
-    category: 'Lab Timetable',
-    date: '2024-10-28',
-    author: 'Department Exam Cell',
-    priority: 'high',
-    pinned: true,
-    content: 'The second Continuous Internal Evaluation (CIE-2) for 21CSL56 (DBMS & Web Lab) and 21CSL57 (Networks Lab) will be conducted between November 12 and November 16, 2024. All students are required to submit duly verified and signed laboratory observation notebooks and record journals prior to entering the exam venue. Batch allocation schedule is published below.',
-    attachmentName: 'CIE2_Lab_Schedule_Nov2024.pdf'
-  },
-  {
-    id: 'ann-2',
-    title: 'Semester End Examination (SEE) Time Table & Hall Ticket Release',
+    id: 'ann-sit-1',
+    title: 'SIT Tumakuru: Schedule for 3rd Semester CIE-1 (Continuous Internal Evaluation)',
     category: 'Examinations',
-    date: '2024-10-20',
-    author: 'Controller of Examinations',
+    date: '2024-10-18',
+    author: 'Department Exam Coordinator, Chemical Engg',
     priority: 'high',
     pinned: true,
-    content: 'Draft Time Table for 3rd, 5th, and 7th Semester B.E. Semester End Examinations (Dec 2024 / Jan 2025) has been officially gazetted. Students may download their provisional hall tickets from the student portal starting Nov 25 after clearing attendance condonation requirements (minimum 75% aggregate per theory course).',
-    attachmentName: 'SEE_Timetable_ODD_Sem_2024_25.pdf'
+    content: 'All 3rd-Semester Chemical Engineering students are hereby notified that CIE-1 examinations will commence from November 4, 2024. Question paper format covers Units 1 & 2 for CH31 (Material & Energy Balances), CH32 (Fluid Mechanics), CH33, and MAT31. Attendance condonation deadline is October 28.',
+    attachmentName: 'SIT_ChemEngg_CIE1_Schedule_Nov2024.pdf'
   },
   {
-    id: 'ann-3',
-    title: 'Guest Lecture: Scalable Microservices Architecture with Kubernetes',
+    id: 'ann-sit-2',
+    title: 'Submission of Fluid Flow Lab Observation Books & Record Sheets',
+    category: 'Lab Timetable',
+    date: '2024-10-12',
+    author: 'Prof. M. B. Patil (Lab In-charge)',
+    priority: 'high',
+    pinned: true,
+    content: 'Students registered for CHL36 (Fluid Flow Operations Lab) must submit completed observation books with calculations for Venturi meter and Reynolds experiments by Monday, 21st October. Verification by lab instructors is mandatory before entering second cycle experiments.',
+    attachmentName: 'CHL36_Record_Submission_Notice.pdf'
+  },
+  {
+    id: 'ann-sit-3',
+    title: 'Technical Symposium & Guest Lecture: Aspen Plus Process Simulation',
     category: 'Guest Lecture',
-    date: '2024-10-14',
-    author: 'CSE Student Association',
+    date: '2024-10-06',
+    author: 'IIChE SIT Student Chapter',
     priority: 'normal',
     pinned: false,
-    content: 'The Department of Computer Science & Engineering is organizing an industry interactive technical session with alumni Mr. Karthik Sundar (Principal Architect, Atlassian). Topics include distributed consensus with Raft, container orchestration with K8s, and event-driven architectures with Kafka. Date: Nov 8, 2024 at 10:30 AM in Auditorium-1.',
-    attachmentName: 'Microservices_Session_Flyer.pdf'
+    content: 'The Indian Institute of Chemical Engineers (IIChE) SIT Student Chapter is conducting a hands-on workshop on Aspen Plus process flowsheet modeling for chemical engineering undergraduates on November 9, 2024, at the Department Computing Facility.',
+    attachmentName: 'AspenPlus_Workshop_Flyer.pdf'
   },
   {
-    id: 'ann-4',
-    title: 'Phase-1 Major Project Review Submission Guidelines (7th Sem)',
-    category: 'Project Review',
-    date: '2024-10-08',
-    author: 'Project Review Committee',
+    id: 'ann-sit-4',
+    title: 'Curriculum & Demo Subject Notice for Students & Evaluators',
+    category: 'Circular',
+    date: '2024-10-02',
+    author: 'Head of Department, Chemical Engineering',
     priority: 'normal',
     pinned: false,
-    content: 'All final year project batches must upload their preliminary SRS document, system architectural block diagrams, and project plan Gantt charts to the department coordinator by Nov 5, 2024. Reviews will be held in the Seminar Hall with departmental project guides.',
-    attachmentName: 'MajorProject_Phase1_Rubrics.pdf'
+    content: 'Please note: 3rd-Semester Chemical Engineering course codes displayed on this portal carry [DEMO] indicators as realistic representative academic data until the final autonomous syllabus gazette is officially uploaded.',
+    attachmentName: 'SIT_Autonomous_Curriculum_Notice.pdf'
   }
 ];

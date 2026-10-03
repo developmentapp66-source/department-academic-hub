@@ -7,11 +7,13 @@ import {
   MOCK_QUESTION_PAPERS,
   MOCK_LAB_MANUALS,
   MOCK_ANNOUNCEMENTS,
+  INSTITUTION_INFO,
 } from './data/mockData';
 import { Sidebar } from './components/Sidebar';
 import { TopHeader } from './components/TopHeader';
 import { LoginPage } from './components/LoginPage';
 import { DashboardView } from './components/DashboardView';
+import { ChemEngThirdSemView } from './components/ChemEngThirdSemView';
 import { NotesView } from './components/NotesView';
 import { QuestionPapersView } from './components/QuestionPapersView';
 import { LabManualsView } from './components/LabManualsView';
@@ -24,10 +26,10 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<StudentUser | null>(null);
 
   // Active Navigation Tab
-  const [currentTab, setCurrentTab] = useState<'dashboard' | 'notes' | 'papers' | 'manuals' | 'announcements'>('dashboard');
+  const [currentTab, setCurrentTab] = useState<'dashboard' | 'chem3' | 'notes' | 'papers' | 'manuals' | 'announcements'>('dashboard');
 
-  // Active Semester filter (initialized from student semester upon login)
-  const [activeSemester, setActiveSemester] = useState<number>(5);
+  // Active Semester filter (defaulted to 3 for Chemical Engineering 3rd sem)
+  const [activeSemester, setActiveSemester] = useState<number>(3);
 
   // Mobile drawer state
   const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState<boolean>(false);
@@ -42,7 +44,7 @@ export default function App() {
 
   const handleLogin = (user: StudentUser) => {
     setCurrentUser(user);
-    setActiveSemester(user.semester);
+    setActiveSemester(user.semester || 3);
     setCurrentTab('dashboard');
   };
 
@@ -66,9 +68,9 @@ export default function App() {
 
   // Dynamic counts for sidebar badges
   const navCounts = {
-    notes: MOCK_NOTES.filter((n) => n.semester === (currentUser?.semester || 5)).length,
-    papers: MOCK_QUESTION_PAPERS.filter((p) => p.semester === (currentUser?.semester || 5)).length,
-    manuals: MOCK_LAB_MANUALS.filter((m) => m.semester === (currentUser?.semester || 5)).length,
+    notes: MOCK_NOTES.filter((n) => n.semester === (currentUser?.semester || 3)).length,
+    papers: MOCK_QUESTION_PAPERS.filter((p) => p.semester === (currentUser?.semester || 3)).length,
+    manuals: MOCK_LAB_MANUALS.filter((m) => m.semester === (currentUser?.semester || 3)).length,
     announcements: MOCK_ANNOUNCEMENTS.filter((a) => a.priority === 'high').length,
   };
 
@@ -119,6 +121,18 @@ export default function App() {
                 />
               )}
 
+              {currentTab === 'chem3' && (
+                <ChemEngThirdSemView
+                  subjects={SUBJECTS_LIST}
+                  notes={MOCK_NOTES}
+                  papers={MOCK_QUESTION_PAPERS}
+                  manuals={MOCK_LAB_MANUALS}
+                  onOpenNote={handleOpenNote}
+                  onOpenPaper={handleOpenPaper}
+                  onOpenExperiment={handleOpenExperiment}
+                />
+              )}
+
               {currentTab === 'notes' && (
                 <NotesView
                   notes={MOCK_NOTES}
@@ -156,14 +170,14 @@ export default function App() {
             <footer className="border-t border-slate-200 bg-white py-6 mt-12">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-slate-900">Department Academic Hub</span>
+                  <span className="font-bold text-slate-900">{INSTITUTION_INFO.name}</span>
                   <span>·</span>
-                  <span>Autonomous Curriculum & Examination Portal</span>
+                  <span>Department of {INSTITUTION_INFO.department}</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <span>Student: <strong className="text-slate-700 font-semibold">{currentUser.name}</strong> ({currentUser.usn})</span>
                   <span>·</span>
-                  <span>AY {currentUser.academicYear}</span>
+                  <span>AY {currentUser.academicYear} · 3rd Sem Hub</span>
                 </div>
               </div>
             </footer>

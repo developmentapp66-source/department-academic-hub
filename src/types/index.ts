@@ -1,6 +1,7 @@
 export interface StudentUser {
   usn: string;
   name: string;
+  institution?: string;
   department: string;
   deptCode: string;
   semester: number;
