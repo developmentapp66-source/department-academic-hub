@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StudentUser, NoteItem, QuestionPaperItem, LabExperiment, LabManualItem } from './types';
 import {
-  DEMO_STUDENTS,
   SUBJECTS_LIST,
   MOCK_NOTES,
   MOCK_QUESTION_PAPERS,
@@ -28,8 +27,11 @@ import { DocumentModal } from './components/DocumentModal';
 import { ToastProvider } from './components/Toast';
 
 export default function App() {
-  // Current Student Session (starts at null for login view)
+  // Current Student Session (starts at null)
   const [currentUser, setCurrentUser] = useState<StudentUser | null>(null);
+
+  // Tracks session initialization on page refresh to prevent UI flickering
+  const [isCheckingSession, setIsCheckingSession] = useState<boolean>(isSupabaseConfigured);
 
   // Active Navigation Tab
   const [currentTab, setCurrentTab] = useState<'dashboard' | 'chem3' | 'notes' | 'papers' | 'manuals' | 'announcements'>('dashboard');
@@ -48,20 +50,31 @@ export default function App() {
     | null
   >(null);
 
-  // Listen to Supabase Auth State changes & restore active sessions
+  // Listen to Supabase Auth State changes & restore active sessions on page reload
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured) {
+      setIsCheckingSession(false);
+      return;
+    }
 
-    // 1. Check existing active session on load
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const student = await getOrSyncStudentProfile(session.user);
-        setCurrentUser(student);
-        setActiveSemester(student.semester || 3);
-      }
-    });
+    // 1. Check existing active session from browser storage on load
+    supabase.auth
+      .getSession()
+      .then(async ({ data: { session } }) => {
+        if (session?.user) {
+          const student = await getOrSyncStudentProfile(session.user);
+          setCurrentUser(student);
+          setActiveSemester(student.semester || 3);
+        }
+      })
+      .catch((err) => {
+        console.error('Error restoring Supabase session:', err);
+      })
+      .finally(() => {
+        setIsCheckingSession(false);
+      });
 
-    // 2. Subscribe to auth events (SIGN_IN, SIGN_OUT, USER_UPDATED)
+    // 2. Subscribe to auth events (SIGN_IN, SIGN_OUT, TOKEN_REFRESHED, USER_UPDATED)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -117,6 +130,28 @@ export default function App() {
     manuals: MOCK_LAB_MANUALS.filter((m) => m.semester === (currentUser?.semester || 3)).length,
     announcements: MOCK_ANNOUNCEMENTS.filter((a) => a.priority === 'high').length,
   };
+
+  // Render a clean loader while restoring session on initial page load / refresh
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white px-4 font-sans">
+        <div className="w-16 h-16 rounded-2xl bg-slate-900 border-2 border-blue-600/30 flex items-center justify-center mb-4 shadow-xl overflow-hidden animate-pulse ring-4 ring-blue-500/10">
+          <img
+            src="/src/assets/images/academic_crest_symbol_1791032252645.jpg"
+            alt="SIT Crest"
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="text-xs font-bold tracking-widest uppercase text-blue-400 mb-1">
+          Siddaganga Institute of Technology, Tumakuru
+        </div>
+        <div className="text-sm font-semibold text-slate-300">
+          Restoring academic portal session...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ToastProvider>
@@ -210,7 +245,7 @@ export default function App() {
               )}
             </main>
 
-            {/* Quiet Academic Footer */}
+            {/* Academic Footer */}
             <footer className="border-t border-slate-200 bg-white py-6 mt-12">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
                 <div className="flex items-center gap-2">
@@ -218,8 +253,8 @@ export default function App() {
                   <span>·</span>
                   <span>Department of {INSTITUTION_INFO.department}</span>
                   <span>·</span>
-                  <span className="font-mono text-[11px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
-                    {isSupabaseConfigured ? 'Supabase Auth' : 'Demo Auth'}
+                  <span className="font-mono text-[11px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
+                    Supabase Auth
                   </span>
                 </div>
                 <div className="flex items-center gap-4">

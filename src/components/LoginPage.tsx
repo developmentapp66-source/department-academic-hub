@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StudentUser } from '../types';
-import { DEMO_STUDENTS, INSTITUTION_INFO } from '../data/mockData';
+import { INSTITUTION_INFO } from '../data/mockData';
 import {
   isSupabaseConfigured,
   supabase,
@@ -9,15 +9,12 @@ import {
 } from '../lib/supabase';
 import {
   Lock,
-  UserCheck,
   Eye,
   EyeOff,
   ArrowRight,
   ShieldCheck,
-  Building2,
   CheckCircle2,
   AlertCircle,
-  KeyRound,
   User,
   Loader2,
   Settings,
@@ -30,9 +27,9 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [usn, setUsn] = useState('1SI23CH015');
-  const [password, setPassword] = useState('student@123');
-  const [fullName, setFullName] = useState('Ananya H. S.');
+  const [usn, setUsn] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -58,32 +55,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       return;
     }
 
-    // 1. Fallback if Supabase environment variables have not been configured
+    // Verify Supabase configuration before attempting authentication
     if (!isSupabaseConfigured) {
-      setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
-        const matched = DEMO_STUDENTS.find((s) => s.usn.toUpperCase() === cleanUsn);
-        if (matched) {
-          onLogin(matched);
-        } else {
-          onLogin({
-            usn: cleanUsn,
-            name: fullName.trim() || `Student (${cleanUsn})`,
-            institution: INSTITUTION_INFO.name,
-            department: 'Chemical Engineering',
-            deptCode: 'CH',
-            semester: 3,
-            section: 'A',
-            academicYear: '2024–2025',
-            email: deriveEmailFromUsn(cleanUsn),
-          });
-        }
-      }, 350);
+      setErrorMessage(
+        'Supabase authentication environment variables are not yet configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable authentication.'
+      );
       return;
     }
 
-    // 2. Real Supabase Authentication: USN + Password with internal derived email
+    // Real Supabase Authentication: USN + Password with derived internal email
     const internalEmail = deriveEmailFromUsn(cleanUsn);
     setIsLoading(true);
 
@@ -95,37 +75,40 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         });
 
         if (error) {
-          // Provide friendly student-oriented messaging for invalid credentials
           if (
             error.message.toLowerCase().includes('invalid login credentials') ||
             error.message.toLowerCase().includes('invalid credentials')
           ) {
             throw new Error(
-              `Invalid USN or password for "${cleanUsn}". If you have not registered this USN yet, please switch to the "Register USN" tab.`
+              `Invalid USN or password for "${cleanUsn}". If you have not created your account yet, please click "Register USN" above.`
             );
           }
           if (error.message.toLowerCase().includes('email not confirmed')) {
             throw new Error(
-              'Your account requires email confirmation. In your Supabase Dashboard, go to Authentication -> Providers -> Email and turn off "Confirm email" to allow instant USN logins.'
+              'Account requires confirmation. To allow instant USN logins, ensure "Confirm email" is turned off in your Supabase Auth provider settings.'
             );
           }
           throw error;
         }
 
         if (data.user) {
-          // Fetch student profile from student_profiles table or sync initial data
+          // Fetch student profile from student_profiles table (or sync initial data)
           const studentProfile = await getOrSyncStudentProfile(data.user, cleanUsn);
           onLogin(studentProfile);
         }
       } else {
-        // Sign Up (Register USN)
+        // Sign Up (Register new student USN)
+        if (!fullName.trim()) {
+          throw new Error('Please enter your full name to register your USN.');
+        }
+
         const { data, error } = await supabase.auth.signUp({
           email: internalEmail,
           password,
           options: {
             data: {
               usn: cleanUsn,
-              full_name: fullName.trim() || `Student (${cleanUsn})`,
+              full_name: fullName.trim(),
               institution: INSTITUTION_INFO.name,
               department: 'Chemical Engineering',
               dept_code: 'CH',
@@ -137,18 +120,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         });
 
         if (error) {
-          if (error.message.toLowerCase().includes('already registered')) {
+          if (
+            error.message.toLowerCase().includes('already registered') ||
+            error.message.toLowerCase().includes('user already exists')
+          ) {
             throw new Error(`USN "${cleanUsn}" is already registered. Please sign in with your password.`);
           }
           throw error;
         }
 
         if (data.session?.user) {
-          // Instant session granted (email confirmation disabled in Supabase)
+          // Instant session granted
           const studentProfile = await getOrSyncStudentProfile(data.session.user, cleanUsn);
           onLogin(studentProfile);
         } else if (data.user) {
-          // Registration succeeded; attempt direct sign in or notify student
+          // Registration succeeded; attempt direct sign-in
           const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
             email: internalEmail,
             password,
@@ -159,7 +145,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             onLogin(studentProfile);
           } else {
             setSuccessMessage(
-              `USN account for "${cleanUsn}" registered successfully! Please sign in with your password.`
+              `Account registered for USN "${cleanUsn}"! Please sign in with your password.`
             );
             setAuthMode('signin');
           }
@@ -169,18 +155,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       setErrorMessage(err.message || 'Authentication error. Please check your credentials.');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleSelectDemo = (student: StudentUser) => {
-    setUsn(student.usn);
-    setPassword('student@123');
-    setFullName(student.name);
-    setErrorMessage(null);
-
-    // If Supabase is not configured yet, allow instant test login
-    if (!isSupabaseConfigured) {
-      onLogin(student);
     }
   };
 
@@ -233,7 +207,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 <span>Supabase USN Auth Connected</span>
               </div>
               <span className="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-emerald-200 text-emerald-700 font-semibold">
-                Real DB Auth
+                Database Auth
               </span>
             </div>
           ) : (
@@ -253,7 +227,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 </button>
               </div>
               <p className="text-[11px] text-amber-900/80 leading-relaxed">
-                Add <code className="bg-amber-100/90 px-1 py-0.5 rounded font-mono font-bold text-amber-950">VITE_SUPABASE_URL</code> and <code className="bg-amber-100/90 px-1 py-0.5 rounded font-mono font-bold text-amber-950">VITE_SUPABASE_ANON_KEY</code> to your Vercel settings. Demo bypass mode is currently active for instant testing.
+                Add <code className="bg-amber-100/90 px-1 py-0.5 rounded font-mono font-bold text-amber-950">VITE_SUPABASE_URL</code> and <code className="bg-amber-100/90 px-1 py-0.5 rounded font-mono font-bold text-amber-950">VITE_SUPABASE_ANON_KEY</code> to your Vercel project environment variables to activate authentication.
               </p>
 
               {showConfigGuide && (
@@ -331,7 +305,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     disabled={isLoading}
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="e.g. Ananya H. S."
+                    placeholder="e.g. Darshan Gowda"
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors shadow-2xs"
                     required
                   />
@@ -369,7 +343,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   Password
                 </label>
                 <span className="text-[11px] text-blue-600 font-medium">
-                  {isSupabaseConfigured ? 'Secured by Supabase' : 'Demo bypass'}
+                  {isSupabaseConfigured ? 'Secured by Supabase' : 'Auth Required'}
                 </span>
               </div>
               <div className="relative">
@@ -421,45 +395,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             </div>
           </form>
 
-          {/* Quick Demo Accounts Selection */}
-          <div className="mt-7 pt-6 border-t border-slate-100">
-            <div className="flex items-center justify-between mb-2.5">
-              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                Select SIT Demo Profile
-              </span>
-              <span className="text-[11px] text-slate-400">One-click populate</span>
-            </div>
-
-            <div className="space-y-2">
-              {DEMO_STUDENTS.map((demo) => {
-                const isCurrent = usn.toUpperCase() === demo.usn;
-                return (
-                  <button
-                    key={demo.usn}
-                    type="button"
-                    disabled={isLoading}
-                    onClick={() => handleSelectDemo(demo)}
-                    className={`w-full text-left p-2.5 rounded-xl border text-xs transition-all flex items-center justify-between ${
-                      isCurrent
-                        ? 'border-blue-600 bg-blue-50/70 font-semibold shadow-2xs'
-                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <div>
-                      <div className="font-bold text-slate-900">{demo.name}</div>
-                      <div className="text-[11px] font-mono text-slate-500">
-                        {demo.usn} · {demo.department} · Sem {demo.semester}
-                      </div>
-                    </div>
-                    <UserCheck className={`w-4 h-4 ${isCurrent ? 'text-blue-600' : 'text-slate-400'}`} />
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-[11px] text-slate-400 text-center mt-3 leading-relaxed">
-              Passwords and credentials are encrypted and stored securely in Supabase.
-            </p>
+          {/* Security Notice */}
+          <div className="mt-7 pt-5 border-t border-slate-100 flex items-center justify-center gap-2 text-xs text-slate-500">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>Authenticated directly via Supabase Auth & RLS</span>
           </div>
         </div>
 

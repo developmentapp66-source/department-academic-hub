@@ -10,42 +10,6 @@ export const INSTITUTION_INFO = {
   disclaimer: 'Curriculum & Demo Data Notice: Subjects, course codes (marked with [DEMO]), lecture notes, and question papers are realistic demo representations for 3rd-Semester Chemical Engineering until your official college syllabus document is provided.'
 };
 
-export const DEMO_STUDENTS: StudentUser[] = [
-  {
-    usn: '1SI23CH015',
-    name: 'Ananya H. S.',
-    institution: 'Siddaganga Institute of Technology, Tumakuru',
-    department: 'Chemical Engineering',
-    deptCode: 'CH',
-    semester: 3,
-    section: 'A',
-    academicYear: '2024–2025',
-    email: 'ananyahs.23ch015@sit.ac.in'
-  },
-  {
-    usn: '1SI23CH042',
-    name: 'Darshan Gowda',
-    institution: 'Siddaganga Institute of Technology, Tumakuru',
-    department: 'Chemical Engineering',
-    deptCode: 'CH',
-    semester: 3,
-    section: 'A',
-    academicYear: '2024–2025',
-    email: 'darshangowda.23ch042@sit.ac.in'
-  },
-  {
-    usn: '1SI22CH028',
-    name: 'Preethi R.',
-    institution: 'Siddaganga Institute of Technology, Tumakuru',
-    department: 'Chemical Engineering',
-    deptCode: 'CH',
-    semester: 4,
-    section: 'B',
-    academicYear: '2024–2025',
-    email: 'preethir.22ch028@sit.ac.in'
-  }
-];
-
 export const SUBJECTS_LIST: Subject[] = [
   // 3rd Semester Chemical Engineering (Core Focus)
   {
