@@ -13,6 +13,7 @@ import {
   EyeOff,
   ArrowRight,
   ShieldCheck,
+  ShieldAlert,
   CheckCircle2,
   AlertCircle,
   User,
@@ -20,12 +21,14 @@ import {
   Settings,
   GraduationCap,
 } from 'lucide-react';
+import { AdminLoginModal } from './AdminLoginModal';
 
 interface LoginPageProps {
   onLogin: (user: StudentUser) => void;
+  onAdminLoginSuccess?: (adminUser: StudentUser) => void;
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onAdminLoginSuccess }) => {
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [usn, setUsn] = useState('');
   const [password, setPassword] = useState('');
@@ -35,6 +38,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showConfigGuide, setShowConfigGuide] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -395,10 +399,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             </div>
           </form>
 
-          {/* Security Notice */}
-          <div className="mt-7 pt-5 border-t border-slate-100 flex items-center justify-center gap-2 text-xs text-slate-500">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Authenticated directly via Supabase Auth & RLS</span>
+          {/* Security Notice & Faculty Admin Access */}
+          <div className="mt-7 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Direct Supabase Auth with RLS</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAdminModalOpen(true)}
+              className="text-xs font-semibold text-blue-700 hover:text-blue-900 underline flex items-center gap-1"
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />
+              <span>Faculty & Admin Login</span>
+            </button>
           </div>
         </div>
 
@@ -407,6 +421,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           Siddaganga Institute of Technology, Tumakuru · Department of Chemical Engineering
         </div>
       </div>
+
+      {/* Dedicated Admin Portal Modal */}
+      <AdminLoginModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        onAdminLoginSuccess={(adminUser) => {
+          if (onAdminLoginSuccess) {
+            onAdminLoginSuccess(adminUser);
+          } else {
+            onLogin(adminUser);
+          }
+        }}
+      />
     </div>
   );
 };

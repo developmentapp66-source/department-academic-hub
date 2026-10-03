@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
-import { StudentUser } from '../types';
+import { StudentUser, AdminResourceItem, AnnouncementItem } from '../types';
 
 // Read client-side environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
@@ -27,16 +27,40 @@ export const supabase: SupabaseClient = createClient(
 );
 
 /**
- * Internally derives a standardized institutional email from the student's USN.
+ * Internally derives a standardized institutional email from the student or admin USN/ID.
  * e.g. "1SI23CH015" -> "1si23ch015@sit.ac.in"
  */
 export function deriveEmailFromUsn(usn: string): string {
   const cleanUsn = usn.trim().replace(/\s+/g, '').toLowerCase();
+  if (cleanUsn.includes('@')) {
+    return cleanUsn;
+  }
   return `${cleanUsn}@sit.ac.in`;
 }
 
 /**
- * Fetches the student's profile from the `student_profiles` table.
+ * Validates with the database if the given user ID has active admin privileges in `student_profiles`.
+ */
+export async function checkIsAdmin(userId: string): Promise<boolean> {
+  if (!isSupabaseConfigured || !userId) return false;
+
+  try {
+    const { data, error } = await supabase
+      .from('student_profiles')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error || !data) return false;
+    return data.role === 'faculty_admin' || data.role === 'super_admin';
+  } catch (err) {
+    console.error('Error verifying admin authorization:', err);
+    return false;
+  }
+}
+
+/**
+ * Fetches the student or admin profile from the `student_profiles` table.
  * If not present, creates/upserts the initial profile with SIT Chemical Engineering 3rd Sem defaults.
  */
 export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string): Promise<StudentUser> {
@@ -67,6 +91,8 @@ export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string):
     academicYear: metadata.academic_year || '2024–2025',
     email: user.email || deriveEmailFromUsn(usn),
     supabaseId: user.id,
+    role: (metadata.role as any) || 'student',
+    createdAt: user.created_at || new Date().toISOString(),
   };
 
   if (!isSupabaseConfigured) {
@@ -93,6 +119,8 @@ export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string):
         academicYear: data.academic_year || defaultProfile.academicYear,
         email: data.email || user.email || defaultProfile.email,
         supabaseId: user.id,
+        role: data.role || 'student',
+        createdAt: data.created_at || defaultProfile.createdAt,
       };
     }
 
@@ -111,6 +139,7 @@ export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string):
           section: defaultProfile.section,
           academic_year: defaultProfile.academicYear,
           email: defaultProfile.email,
+          role: defaultProfile.role || 'student',
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'id' }
@@ -130,10 +159,11 @@ export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string):
         academicYear: insertedData.academic_year || defaultProfile.academicYear,
         email: insertedData.email || defaultProfile.email,
         supabaseId: user.id,
+        role: insertedData.role || 'student',
+        createdAt: insertedData.created_at || defaultProfile.createdAt,
       };
     }
   } catch (err) {
-    // Silently fall back to user metadata / defaultProfile if table query fails
     console.warn('Could not sync with student_profiles table, using auth metadata:', err);
   }
 
@@ -141,7 +171,7 @@ export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string):
 }
 
 /**
- * Fallback synchronous mapping of Supabase Auth user object.
+ * Synchronous mapper for fallback user objects.
  */
 export function mapSupabaseUserToStudent(user: User): StudentUser {
   const metadata = user.user_metadata || {};
@@ -167,5 +197,268 @@ export function mapSupabaseUserToStudent(user: User): StudentUser {
     academicYear: metadata.academic_year || '2024–2025',
     email: user.email || '',
     supabaseId: user.id,
+    role: metadata.role || 'student',
+    createdAt: user.created_at || new Date().toISOString(),
   };
+}
+
+/**
+ * Fetches all registered student profiles. (Guarded by Supabase RLS: only admins can select all rows).
+ * Never exposes passwords or sensitive credentials.
+ */
+export async function fetchRegisteredStudents(): Promise<StudentUser[]> {
+  if (!isSupabaseConfigured) return [];
+
+  const { data, error } = await supabase
+    .from('student_profiles')
+    .select('id, usn, full_name, institution, department, dept_code, semester, section, academic_year, email, role, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []).map((row) => ({
+    usn: row.usn,
+    name: row.full_name,
+    institution: row.institution,
+    department: row.department,
+    deptCode: row.dept_code,
+    semester: Number(row.semester),
+    section: row.section,
+    academicYear: row.academic_year,
+    email: row.email,
+    supabaseId: row.id,
+    role: row.role,
+    createdAt: row.created_at,
+  }));
+}
+
+/**
+ * Fetches all managed academic resources.
+ */
+export async function fetchAdminResources(): Promise<AdminResourceItem[]> {
+  if (!isSupabaseConfigured) return [];
+
+  const { data, error } = await supabase
+    .from('academic_resources')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.warn('Could not fetch academic_resources from database table:', error.message);
+    return [];
+  }
+
+  return (data || []).map((row) => ({
+    id: row.id,
+    title: row.title,
+    subjectCode: row.subject_code,
+    subjectName: row.subject_name,
+    semester: Number(row.semester),
+    resourceType: row.resource_type,
+    description: row.description || '',
+    fileLink: row.file_link,
+    fileSize: row.file_size || '2.5 MB',
+    authorOrFaculty: row.author_faculty || '',
+    dateAdded: row.date_added || row.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+  }));
+}
+
+/**
+ * Inserts a new academic resource. Guarded by RLS: requires is_admin() privilege.
+ */
+export async function insertAdminResource(resource: Omit<AdminResourceItem, 'id' | 'dateAdded'>): Promise<AdminResourceItem> {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  const { data, error } = await supabase
+    .from('academic_resources')
+    .insert([
+      {
+        title: resource.title,
+        subject_code: resource.subjectCode,
+        subject_name: resource.subjectName,
+        semester: resource.semester,
+        resource_type: resource.resourceType,
+        description: resource.description,
+        file_link: resource.fileLink,
+        file_size: resource.fileSize || '2.5 MB',
+        author_faculty: resource.authorOrFaculty || '',
+        date_added: new Date().toISOString().split('T')[0],
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    id: data.id,
+    title: data.title,
+    subjectCode: data.subject_code,
+    subjectName: data.subject_name,
+    semester: Number(data.semester),
+    resourceType: data.resource_type,
+    description: data.description || '',
+    fileLink: data.file_link,
+    fileSize: data.file_size || '2.5 MB',
+    authorOrFaculty: data.author_faculty || '',
+    dateAdded: data.date_added,
+  };
+}
+
+/**
+ * Updates an academic resource. Guarded by RLS: requires is_admin() privilege.
+ */
+export async function updateAdminResource(id: string, updates: Partial<AdminResourceItem>): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  const dbUpdates: Record<string, any> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (updates.title !== undefined) dbUpdates.title = updates.title;
+  if (updates.subjectCode !== undefined) dbUpdates.subject_code = updates.subjectCode;
+  if (updates.subjectName !== undefined) dbUpdates.subject_name = updates.subjectName;
+  if (updates.semester !== undefined) dbUpdates.semester = updates.semester;
+  if (updates.resourceType !== undefined) dbUpdates.resource_type = updates.resourceType;
+  if (updates.description !== undefined) dbUpdates.description = updates.description;
+  if (updates.fileLink !== undefined) dbUpdates.file_link = updates.fileLink;
+  if (updates.fileSize !== undefined) dbUpdates.file_size = updates.fileSize;
+  if (updates.authorOrFaculty !== undefined) dbUpdates.author_faculty = updates.authorOrFaculty;
+
+  const { error } = await supabase
+    .from('academic_resources')
+    .update(dbUpdates)
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+/**
+ * Deletes an academic resource. Guarded by RLS: requires is_admin() privilege.
+ */
+export async function deleteAdminResource(id: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  const { error } = await supabase
+    .from('academic_resources')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+/**
+ * Fetches announcements from the database.
+ */
+export async function fetchDbAnnouncements(): Promise<AnnouncementItem[]> {
+  if (!isSupabaseConfigured) return [];
+
+  const { data, error } = await supabase
+    .from('department_announcements')
+    .select('*')
+    .order('pinned', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.warn('Could not fetch department_announcements from DB:', error.message);
+    return [];
+  }
+
+  return (data || []).map((row) => ({
+    id: row.id,
+    title: row.title,
+    category: row.category as any,
+    date: row.date || row.created_at?.split('T')[0],
+    author: row.author,
+    priority: row.priority as any,
+    content: row.content,
+    attachmentName: row.attachment_name,
+    pinned: Boolean(row.pinned),
+  }));
+}
+
+/**
+ * Inserts an announcement into the database. Guarded by RLS: requires is_admin() privilege.
+ */
+export async function insertDbAnnouncement(ann: Omit<AnnouncementItem, 'id' | 'date'>): Promise<AnnouncementItem> {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  const { data, error } = await supabase
+    .from('department_announcements')
+    .insert([
+      {
+        title: ann.title,
+        category: ann.category,
+        priority: ann.priority,
+        content: ann.content,
+        author: ann.author,
+        attachment_name: ann.attachmentName || null,
+        pinned: ann.pinned || false,
+        date: new Date().toISOString().split('T')[0],
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    id: data.id,
+    title: data.title,
+    category: data.category as any,
+    date: data.date,
+    author: data.author,
+    priority: data.priority as any,
+    content: data.content,
+    attachmentName: data.attachment_name,
+    pinned: Boolean(data.pinned),
+  };
+}
+
+/**
+ * Updates an announcement in the database. Guarded by RLS: requires is_admin() privilege.
+ */
+export async function updateDbAnnouncement(id: string, updates: Partial<AnnouncementItem>): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  const dbUpdates: Record<string, any> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (updates.title !== undefined) dbUpdates.title = updates.title;
+  if (updates.category !== undefined) dbUpdates.category = updates.category;
+  if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
+  if (updates.content !== undefined) dbUpdates.content = updates.content;
+  if (updates.author !== undefined) dbUpdates.author = updates.author;
+  if (updates.attachmentName !== undefined) dbUpdates.attachment_name = updates.attachmentName;
+  if (updates.pinned !== undefined) dbUpdates.pinned = updates.pinned;
+
+  const { error } = await supabase
+    .from('department_announcements')
+    .update(dbUpdates)
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+/**
+ * Deletes an announcement from the database. Guarded by RLS: requires is_admin() privilege.
+ */
+export async function deleteDbAnnouncement(id: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  const { error } = await supabase
+    .from('department_announcements')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
 }

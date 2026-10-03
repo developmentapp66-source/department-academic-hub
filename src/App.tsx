@@ -13,6 +13,7 @@ import {
   supabase,
   mapSupabaseUserToStudent,
   getOrSyncStudentProfile,
+  checkIsAdmin,
 } from './lib/supabase';
 import { Sidebar } from './components/Sidebar';
 import { TopHeader } from './components/TopHeader';
@@ -23,12 +24,16 @@ import { NotesView } from './components/NotesView';
 import { QuestionPapersView } from './components/QuestionPapersView';
 import { LabManualsView } from './components/LabManualsView';
 import { AnnouncementsView } from './components/AnnouncementsView';
+import { AdminDashboardView } from './components/AdminDashboardView';
 import { DocumentModal } from './components/DocumentModal';
 import { ToastProvider } from './components/Toast';
 
 export default function App() {
-  // Current Student Session (starts at null)
+  // Current Student / Admin Session (starts at null)
   const [currentUser, setCurrentUser] = useState<StudentUser | null>(null);
+
+  // Tracks if the administrator is viewing the Admin Console
+  const [isAdminView, setIsAdminView] = useState<boolean>(false);
 
   // Tracks session initialization on page refresh to prevent UI flickering
   const [isCheckingSession, setIsCheckingSession] = useState<boolean>(isSupabaseConfigured);
@@ -62,9 +67,18 @@ export default function App() {
       .getSession()
       .then(async ({ data: { session } }) => {
         if (session?.user) {
-          const student = await getOrSyncStudentProfile(session.user);
-          setCurrentUser(student);
-          setActiveSemester(student.semester || 3);
+          const profile = await getOrSyncStudentProfile(session.user);
+          setCurrentUser(profile);
+          setActiveSemester(profile.semester || 3);
+
+          // If returning user was an administrator, enable admin view access
+          if (profile.role === 'faculty_admin' || profile.role === 'super_admin') {
+            const isConfirmedAdmin = await checkIsAdmin(session.user.id);
+            if (isConfirmedAdmin) {
+              // Maintain role confirmation from database
+              profile.role = profile.role || 'faculty_admin';
+            }
+          }
         }
       })
       .catch((err) => {
@@ -79,11 +93,12 @@ export default function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        const student = await getOrSyncStudentProfile(session.user);
-        setCurrentUser(student);
-        setActiveSemester(student.semester || 3);
+        const profile = await getOrSyncStudentProfile(session.user);
+        setCurrentUser(profile);
+        setActiveSemester(profile.semester || 3);
       } else {
         setCurrentUser(null);
+        setIsAdminView(false);
       }
     });
 
@@ -96,6 +111,12 @@ export default function App() {
     setCurrentUser(user);
     setActiveSemester(user.semester || 3);
     setCurrentTab('dashboard');
+    setIsAdminView(false);
+  };
+
+  const handleAdminLoginSuccess = (admin: StudentUser) => {
+    setCurrentUser(admin);
+    setIsAdminView(true);
   };
 
   const handleLogout = async () => {
@@ -107,6 +128,7 @@ export default function App() {
       }
     }
     setCurrentUser(null);
+    setIsAdminView(false);
     setCurrentTab('dashboard');
     setIsSidebarOpenMobile(false);
   };
@@ -147,132 +169,166 @@ export default function App() {
           Siddaganga Institute of Technology, Tumakuru
         </div>
         <div className="text-sm font-semibold text-slate-300">
-          Restoring academic portal session...
+          Verifying academic portal session...
         </div>
       </div>
     );
   }
 
+  // If user is not logged in, show Login page with Admin Login modal capability
+  if (!currentUser) {
+    return (
+      <ToastProvider>
+        <LoginPage
+          onLogin={handleLogin}
+          onAdminLoginSuccess={handleAdminLoginSuccess}
+        />
+      </ToastProvider>
+    );
+  }
+
+  // If user is in Admin view AND database-validated as faculty_admin or super_admin:
+  if (isAdminView && (currentUser.role === 'faculty_admin' || currentUser.role === 'super_admin')) {
+    return (
+      <ToastProvider>
+        <AdminDashboardView
+          adminUser={currentUser}
+          onLogoutAdmin={handleLogout}
+          onSwitchToStudentPortal={() => setIsAdminView(false)}
+        />
+      </ToastProvider>
+    );
+  }
+
   return (
     <ToastProvider>
-      {!currentUser ? (
-        <LoginPage onLogin={handleLogin} />
-      ) : (
-        <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
-          {/* Professional Sidebar Navigation */}
-          <Sidebar
+      <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
+        {/* Professional Sidebar Navigation */}
+        <Sidebar
+          currentUser={currentUser}
+          currentTab={currentTab}
+          onSelectTab={setCurrentTab}
+          onLogout={handleLogout}
+          isOpenMobile={isSidebarOpenMobile}
+          onCloseMobile={() => setIsSidebarOpenMobile(false)}
+          counts={navCounts}
+        />
+
+        {/* Main Content Area (Offset on desktop for persistent sidebar) */}
+        <div className="lg:pl-72 flex flex-col min-h-screen">
+          {/* Top Bar Header */}
+          <TopHeader
             currentUser={currentUser}
             currentTab={currentTab}
             onSelectTab={setCurrentTab}
-            onLogout={handleLogout}
-            isOpenMobile={isSidebarOpenMobile}
-            onCloseMobile={() => setIsSidebarOpenMobile(false)}
-            counts={navCounts}
+            selectedSemester={activeSemester}
+            onSelectSemester={setActiveSemester}
+            onOpenMobileMenu={() => setIsSidebarOpenMobile(true)}
+            announcementCount={navCounts.announcements}
+            onOpenAdminDashboard={
+              currentUser.role === 'faculty_admin' || currentUser.role === 'super_admin'
+                ? () => setIsAdminView(true)
+                : undefined
+            }
           />
 
-          {/* Main Content Area (Offset on desktop for persistent sidebar) */}
-          <div className="lg:pl-72 flex flex-col min-h-screen">
-            {/* Top Bar Header */}
-            <TopHeader
-              currentUser={currentUser}
-              currentTab={currentTab}
-              onSelectTab={setCurrentTab}
-              selectedSemester={activeSemester}
-              onSelectSemester={setActiveSemester}
-              onOpenMobileMenu={() => setIsSidebarOpenMobile(true)}
-              announcementCount={navCounts.announcements}
-            />
+          {/* Viewport Content */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            {currentTab === 'dashboard' && (
+              <DashboardView
+                currentUser={currentUser}
+                subjects={SUBJECTS_LIST}
+                notes={MOCK_NOTES}
+                papers={MOCK_QUESTION_PAPERS}
+                manuals={MOCK_LAB_MANUALS}
+                announcements={MOCK_ANNOUNCEMENTS}
+                onNavigateTab={setCurrentTab}
+                onOpenNote={handleOpenNote}
+                onOpenPaper={handleOpenPaper}
+                onOpenExperiment={handleOpenExperiment}
+              />
+            )}
 
-            {/* Viewport Content */}
-            <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-              {currentTab === 'dashboard' && (
-                <DashboardView
-                  currentUser={currentUser}
-                  subjects={SUBJECTS_LIST}
-                  notes={MOCK_NOTES}
-                  papers={MOCK_QUESTION_PAPERS}
-                  manuals={MOCK_LAB_MANUALS}
-                  announcements={MOCK_ANNOUNCEMENTS}
-                  onNavigateTab={setCurrentTab}
-                  onOpenNote={handleOpenNote}
-                  onOpenPaper={handleOpenPaper}
-                  onOpenExperiment={handleOpenExperiment}
-                />
-              )}
+            {currentTab === 'chem3' && (
+              <ChemEngThirdSemView
+                subjects={SUBJECTS_LIST}
+                notes={MOCK_NOTES}
+                papers={MOCK_QUESTION_PAPERS}
+                manuals={MOCK_LAB_MANUALS}
+                onOpenNote={handleOpenNote}
+                onOpenPaper={handleOpenPaper}
+                onOpenExperiment={handleOpenExperiment}
+              />
+            )}
 
-              {currentTab === 'chem3' && (
-                <ChemEngThirdSemView
-                  subjects={SUBJECTS_LIST}
-                  notes={MOCK_NOTES}
-                  papers={MOCK_QUESTION_PAPERS}
-                  manuals={MOCK_LAB_MANUALS}
-                  onOpenNote={handleOpenNote}
-                  onOpenPaper={handleOpenPaper}
-                  onOpenExperiment={handleOpenExperiment}
-                />
-              )}
+            {currentTab === 'notes' && (
+              <NotesView
+                notes={MOCK_NOTES}
+                subjects={SUBJECTS_LIST}
+                initialSemester={activeSemester}
+                onOpenNote={handleOpenNote}
+              />
+            )}
 
-              {currentTab === 'notes' && (
-                <NotesView
-                  notes={MOCK_NOTES}
-                  subjects={SUBJECTS_LIST}
-                  initialSemester={activeSemester}
-                  onOpenNote={handleOpenNote}
-                />
-              )}
+            {currentTab === 'papers' && (
+              <QuestionPapersView
+                papers={MOCK_QUESTION_PAPERS}
+                subjects={SUBJECTS_LIST}
+                initialSemester={activeSemester}
+                onOpenPaper={handleOpenPaper}
+              />
+            )}
 
-              {currentTab === 'papers' && (
-                <QuestionPapersView
-                  papers={MOCK_QUESTION_PAPERS}
-                  subjects={SUBJECTS_LIST}
-                  initialSemester={activeSemester}
-                  onOpenPaper={handleOpenPaper}
-                />
-              )}
+            {currentTab === 'manuals' && (
+              <LabManualsView
+                manuals={MOCK_LAB_MANUALS}
+                initialSemester={activeSemester}
+                onOpenExperiment={handleOpenExperiment}
+              />
+            )}
 
-              {currentTab === 'manuals' && (
-                <LabManualsView
-                  manuals={MOCK_LAB_MANUALS}
-                  initialSemester={activeSemester}
-                  onOpenExperiment={handleOpenExperiment}
-                />
-              )}
+            {currentTab === 'announcements' && (
+              <AnnouncementsView
+                announcements={MOCK_ANNOUNCEMENTS}
+              />
+            )}
+          </main>
 
-              {currentTab === 'announcements' && (
-                <AnnouncementsView
-                  announcements={MOCK_ANNOUNCEMENTS}
-                />
-              )}
-            </main>
-
-            {/* Academic Footer */}
-            <footer className="border-t border-slate-200 bg-white py-6 mt-12">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-slate-900">{INSTITUTION_INFO.name}</span>
-                  <span>·</span>
-                  <span>Department of {INSTITUTION_INFO.department}</span>
-                  <span>·</span>
-                  <span className="font-mono text-[11px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
-                    Supabase Auth
-                  </span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span>Student: <strong className="text-slate-700 font-semibold">{currentUser.name}</strong> ({currentUser.usn})</span>
-                  <span>·</span>
-                  <span>AY {currentUser.academicYear} · 3rd Sem Hub</span>
-                </div>
+          {/* Academic Footer */}
+          <footer className="border-t border-slate-200 bg-white py-6 mt-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-900">{INSTITUTION_INFO.name}</span>
+                <span>·</span>
+                <span>Department of {INSTITUTION_INFO.department}</span>
+                <span>·</span>
+                <span className="font-mono text-[11px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
+                  Supabase Auth & RLS
+                </span>
+                {(currentUser.role === 'faculty_admin' || currentUser.role === 'super_admin') && (
+                  <button
+                    onClick={() => setIsAdminView(true)}
+                    className="ml-2 font-semibold text-blue-700 hover:text-blue-900 underline text-[11px]"
+                  >
+                    Switch to Admin Console &rarr;
+                  </button>
+                )}
               </div>
-            </footer>
-          </div>
-
-          {/* Universal Document Preview Modal */}
-          <DocumentModal
-            document={activeDocument}
-            onClose={() => setActiveDocument(null)}
-          />
+              <div className="flex items-center gap-4">
+                <span>User: <strong className="text-slate-700 font-semibold">{currentUser.name}</strong> ({currentUser.usn})</span>
+                <span>·</span>
+                <span>AY {currentUser.academicYear} · 3rd Sem Hub</span>
+              </div>
+            </div>
+          </footer>
         </div>
-      )}
+
+        {/* Universal Document Preview Modal */}
+        <DocumentModal
+          document={activeDocument}
+          onClose={() => setActiveDocument(null)}
+        />
+      </div>
     </ToastProvider>
   );
 }

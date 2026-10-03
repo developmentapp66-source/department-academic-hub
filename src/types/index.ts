@@ -10,6 +10,22 @@ export interface StudentUser {
   email: string;
   avatarUrl?: string;
   supabaseId?: string;
+  role?: 'student' | 'faculty_admin' | 'super_admin';
+  createdAt?: string;
+}
+
+export interface AdminResourceItem {
+  id: string;
+  title: string;
+  subjectCode: string;
+  subjectName: string;
+  semester: number;
+  resourceType: 'notes' | 'question_paper' | 'lab_manual';
+  description: string;
+  fileLink: string;
+  fileSize?: string;
+  dateAdded: string;
+  authorOrFaculty?: string;
 }
 
 export interface Subject {

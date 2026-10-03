@@ -18,6 +18,7 @@ interface TopHeaderProps {
   onSelectSemester: (sem: number) => void;
   onOpenMobileMenu: () => void;
   announcementCount: number;
+  onOpenAdminDashboard?: () => void;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
@@ -28,6 +29,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   onSelectSemester,
   onOpenMobileMenu,
   announcementCount,
+  onOpenAdminDashboard,
 }) => {
   const [showSemDropdown, setShowSemDropdown] = useState(false);
   const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -125,6 +127,17 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               <Calendar className="w-3 h-3 text-slate-500" />
               <span>{currentUser.academicYear}</span>
             </div>
+
+            {/* Admin Console shortcut for authorized faculty/admins */}
+            {(currentUser.role === 'faculty_admin' || currentUser.role === 'super_admin') && onOpenAdminDashboard && (
+              <button
+                onClick={onOpenAdminDashboard}
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 text-xs font-bold rounded-lg border border-amber-500/30 transition-colors"
+                title="Open Department Administrator Dashboard"
+              >
+                <span>Admin Console</span>
+              </button>
+            )}
 
             {/* Notification Bell */}
             <button
