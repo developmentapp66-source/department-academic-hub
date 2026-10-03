@@ -2,17 +2,26 @@ import React, { useState } from 'react';
 import { StudentUser } from '../types';
 import { DEMO_STUDENTS, INSTITUTION_INFO } from '../data/mockData';
 import {
+  isSupabaseConfigured,
+  supabase,
+  deriveEmailFromUsn,
+  getOrSyncStudentProfile,
+} from '../lib/supabase';
+import {
   Lock,
   UserCheck,
   Eye,
   EyeOff,
   ArrowRight,
   ShieldCheck,
-  School,
   Building2,
-  BookOpen,
   CheckCircle2,
   AlertCircle,
+  KeyRound,
+  User,
+  Loader2,
+  Settings,
+  GraduationCap,
 } from 'lucide-react';
 
 interface LoginPageProps {
@@ -20,55 +29,163 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [usn, setUsn] = useState('1SI23CH015');
   const [password, setPassword] = useState('student@123');
+  const [fullName, setFullName] = useState('Ananya H. S.');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showConfigGuide, setShowConfigGuide] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setErrorMessage(null);
+    setSuccessMessage(null);
 
     const cleanUsn = usn.trim().toUpperCase();
     if (!cleanUsn) {
-      setError('Please enter your University Seat Number (USN).');
+      setErrorMessage('Please enter your University Seat Number (USN).');
       return;
     }
     if (!password) {
-      setError('Please enter your student password.');
+      setErrorMessage('Please enter your password.');
+      return;
+    }
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
       return;
     }
 
-    // Match with demo students or dynamically generate student profile
-    const matched = DEMO_STUDENTS.find((s) => s.usn.toUpperCase() === cleanUsn);
-    if (matched) {
-      onLogin(matched);
+    // 1. Fallback if Supabase environment variables have not been configured
+    if (!isSupabaseConfigured) {
+      setIsLoading(true);
+      setTimeout(() => {
+        setIsLoading(false);
+        const matched = DEMO_STUDENTS.find((s) => s.usn.toUpperCase() === cleanUsn);
+        if (matched) {
+          onLogin(matched);
+        } else {
+          onLogin({
+            usn: cleanUsn,
+            name: fullName.trim() || `Student (${cleanUsn})`,
+            institution: INSTITUTION_INFO.name,
+            department: 'Chemical Engineering',
+            deptCode: 'CH',
+            semester: 3,
+            section: 'A',
+            academicYear: '2024–2025',
+            email: deriveEmailFromUsn(cleanUsn),
+          });
+        }
+      }, 350);
       return;
     }
 
-    // Dynamic student profile for arbitrary input
-    const defaultStudent: StudentUser = {
-      usn: cleanUsn,
-      name: `Student (${cleanUsn})`,
-      institution: INSTITUTION_INFO.name,
-      department: 'Chemical Engineering',
-      deptCode: 'CH',
-      semester: 3,
-      section: 'A',
-      academicYear: '2024–2025',
-      email: `${cleanUsn.toLowerCase()}@sit.ac.in`,
-    };
-    onLogin(defaultStudent);
+    // 2. Real Supabase Authentication: USN + Password with internal derived email
+    const internalEmail = deriveEmailFromUsn(cleanUsn);
+    setIsLoading(true);
+
+    try {
+      if (authMode === 'signin') {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: internalEmail,
+          password,
+        });
+
+        if (error) {
+          // Provide friendly student-oriented messaging for invalid credentials
+          if (
+            error.message.toLowerCase().includes('invalid login credentials') ||
+            error.message.toLowerCase().includes('invalid credentials')
+          ) {
+            throw new Error(
+              `Invalid USN or password for "${cleanUsn}". If you have not registered this USN yet, please switch to the "Register USN" tab.`
+            );
+          }
+          if (error.message.toLowerCase().includes('email not confirmed')) {
+            throw new Error(
+              'Your account requires email confirmation. In your Supabase Dashboard, go to Authentication -> Providers -> Email and turn off "Confirm email" to allow instant USN logins.'
+            );
+          }
+          throw error;
+        }
+
+        if (data.user) {
+          // Fetch student profile from student_profiles table or sync initial data
+          const studentProfile = await getOrSyncStudentProfile(data.user, cleanUsn);
+          onLogin(studentProfile);
+        }
+      } else {
+        // Sign Up (Register USN)
+        const { data, error } = await supabase.auth.signUp({
+          email: internalEmail,
+          password,
+          options: {
+            data: {
+              usn: cleanUsn,
+              full_name: fullName.trim() || `Student (${cleanUsn})`,
+              institution: INSTITUTION_INFO.name,
+              department: 'Chemical Engineering',
+              dept_code: 'CH',
+              semester: 3,
+              section: 'A',
+              academic_year: '2024–2025',
+            },
+          },
+        });
+
+        if (error) {
+          if (error.message.toLowerCase().includes('already registered')) {
+            throw new Error(`USN "${cleanUsn}" is already registered. Please sign in with your password.`);
+          }
+          throw error;
+        }
+
+        if (data.session?.user) {
+          // Instant session granted (email confirmation disabled in Supabase)
+          const studentProfile = await getOrSyncStudentProfile(data.session.user, cleanUsn);
+          onLogin(studentProfile);
+        } else if (data.user) {
+          // Registration succeeded; attempt direct sign in or notify student
+          const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+            email: internalEmail,
+            password,
+          });
+
+          if (!signInErr && signInData.user) {
+            const studentProfile = await getOrSyncStudentProfile(signInData.user, cleanUsn);
+            onLogin(studentProfile);
+          } else {
+            setSuccessMessage(
+              `USN account for "${cleanUsn}" registered successfully! Please sign in with your password.`
+            );
+            setAuthMode('signin');
+          }
+        }
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Authentication error. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSelectDemo = (student: StudentUser) => {
     setUsn(student.usn);
     setPassword('student@123');
-    setError(null);
+    setFullName(student.name);
+    setErrorMessage(null);
+
+    // If Supabase is not configured yet, allow instant test login
+    if (!isSupabaseConfigured) {
+      onLogin(student);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-center relative overflow-hidden font-sans py-8">
       {/* Background Campus Image with Deep Collegiate Blue Scrim */}
       <div className="absolute inset-0 z-0">
         <img
@@ -80,10 +197,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         <div className="absolute inset-0 bg-linear-to-b from-blue-950/85 via-slate-950/90 to-slate-950" />
       </div>
 
-      <div className="relative z-10 max-w-lg w-full mx-auto px-4 sm:px-6 py-10">
+      <div className="relative z-10 max-w-lg w-full mx-auto px-4 sm:px-6">
         {/* Academic Card */}
-        <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 p-8 sm:p-10 backdrop-blur-md">
-          {/* Logo & Text Treatment */}
+        <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 p-7 sm:p-9 backdrop-blur-md">
+          {/* Logo & Header */}
           <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-900 shadow-md mb-3.5 overflow-hidden border-2 border-blue-600/30 ring-4 ring-blue-50">
               <img
@@ -96,57 +213,175 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
             <div className="space-y-1">
               <div className="text-xs font-bold tracking-wide uppercase text-blue-700">
-                Siddaganga Institute of Technology, Tumakuru
+                {INSTITUTION_INFO.name}
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                 Chemical Engineering Academic Hub
               </h1>
-              <div className="inline-block mt-1 text-xs font-bold text-blue-900 bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full">
-                3rd Semester Repository
+              <div className="inline-flex items-center gap-1.5 mt-1 text-xs font-bold text-blue-900 bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full">
+                <GraduationCap className="w-3.5 h-3.5 text-blue-700" />
+                <span>3rd Semester Portal · USN Login</span>
               </div>
             </div>
           </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="p-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-xl font-medium">
-                {error}
+          {/* Supabase Status Banner */}
+          {isSupabaseConfigured ? (
+            <div className="mb-5 p-3 bg-emerald-50/90 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-900">
+              <div className="flex items-center gap-2 font-semibold">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Supabase USN Auth Connected</span>
+              </div>
+              <span className="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-emerald-200 text-emerald-700 font-semibold">
+                Real DB Auth
+              </span>
+            </div>
+          ) : (
+            <div className="mb-5 p-3.5 bg-amber-50/90 border border-amber-200 rounded-xl text-xs text-amber-950 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 font-bold text-amber-900">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Supabase Environment Pending</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowConfigGuide(!showConfigGuide)}
+                  className="text-[11px] font-semibold text-blue-700 hover:text-blue-900 underline flex items-center gap-1"
+                >
+                  <Settings className="w-3 h-3" />
+                  <span>Setup Guide</span>
+                </button>
+              </div>
+              <p className="text-[11px] text-amber-900/80 leading-relaxed">
+                Add <code className="bg-amber-100/90 px-1 py-0.5 rounded font-mono font-bold text-amber-950">VITE_SUPABASE_URL</code> and <code className="bg-amber-100/90 px-1 py-0.5 rounded font-mono font-bold text-amber-950">VITE_SUPABASE_ANON_KEY</code> to your Vercel settings. Demo bypass mode is currently active for instant testing.
+              </p>
+
+              {showConfigGuide && (
+                <div className="mt-2 pt-2 border-t border-amber-200/80 text-[11px] space-y-1 font-mono text-slate-800 bg-white/70 p-2.5 rounded-lg">
+                  <div className="font-bold text-slate-900 font-sans">Required Vercel Variables:</div>
+                  <div>1. <span className="font-bold text-blue-700">VITE_SUPABASE_URL</span> = https://[project-ref].supabase.co</div>
+                  <div>2. <span className="font-bold text-blue-700">VITE_SUPABASE_ANON_KEY</span> = [anon-public-key]</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Mode Tabs: Sign In vs Register USN */}
+          <div className="flex rounded-xl bg-slate-100 p-1 mb-5">
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={() => {
+                setAuthMode('signin');
+                setErrorMessage(null);
+                setSuccessMessage(null);
+              }}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                authMode === 'signin'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Sign In with USN
+            </button>
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={() => {
+                setAuthMode('signup');
+                setErrorMessage(null);
+                setSuccessMessage(null);
+              }}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                authMode === 'signup'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Register USN
+            </button>
+          </div>
+
+          {/* Login / Registration Form: USN + Password */}
+          <form onSubmit={handleAuthSubmit} className="space-y-4">
+            {errorMessage && (
+              <div className="p-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-xl font-medium flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <span className="leading-relaxed">{errorMessage}</span>
               </div>
             )}
 
+            {successMessage && (
+              <div className="p-3 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl font-medium flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span className="leading-relaxed">{successMessage}</span>
+              </div>
+            )}
+
+            {authMode === 'signup' && (
+              <div>
+                <label htmlFor="name" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Student Full Name
+                </label>
+                <div className="relative">
+                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    id="name"
+                    type="text"
+                    disabled={isLoading}
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="e.g. Ananya H. S."
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors shadow-2xs"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* USN Input */}
             <div>
               <label htmlFor="usn" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                 University Seat Number (USN)
               </label>
               <div className="relative">
+                <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   id="usn"
                   type="text"
+                  disabled={isLoading}
                   value={usn}
-                  onChange={(e) => setUsn(e.target.value)}
+                  onChange={(e) => setUsn(e.target.value.toUpperCase())}
                   placeholder="e.g. 1SI23CH015"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 font-mono transition-colors shadow-2xs"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 font-mono font-semibold uppercase tracking-wider transition-colors shadow-2xs"
                   required
                 />
               </div>
+              <span className="text-[10px] text-slate-500 mt-1 block">
+                Enter your official SIT seat number (e.g. <span className="font-mono text-slate-700 font-bold">1SI23CH015</span>)
+              </span>
             </div>
 
+            {/* Password Input */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="pass" className="block text-xs font-bold uppercase tracking-wider text-slate-700">
                   Password
                 </label>
-                <span className="text-[11px] text-blue-600 font-medium">Demo enabled</span>
+                <span className="text-[11px] text-blue-600 font-medium">
+                  {isSupabaseConfigured ? 'Secured by Supabase' : 'Demo bypass'}
+                </span>
               </div>
               <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   id="pass"
                   type={showPassword ? 'text' : 'password'}
+                  disabled={isLoading}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your student password"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors pr-10 shadow-2xs"
+                  placeholder={authMode === 'signup' ? 'Create a secure password (min 6 chars)' : 'Enter your password'}
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors shadow-2xs"
                   required
                 />
                 <button
@@ -160,13 +395,28 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               </div>
             </div>
 
+            {/* Submit Button with Loading State */}
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold tracking-wide transition-all shadow-md shadow-blue-600/20 hover:shadow-lg focus:outline-hidden focus:ring-2 focus:ring-blue-600"
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl text-sm font-bold tracking-wide transition-all shadow-md shadow-blue-600/20 hover:shadow-lg focus:outline-hidden focus:ring-2 focus:ring-blue-600 cursor-pointer"
               >
-                <span>Login to SIT Chemical Engg Portal</span>
-                <ArrowRight className="w-4 h-4" />
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Verifying USN with Supabase...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>
+                      {authMode === 'signup'
+                        ? 'Register SIT Student Account'
+                        : 'Sign In with USN'}
+                    </span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -176,9 +426,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <div className="flex items-center justify-between mb-2.5">
               <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                Select SIT Demo Student
+                Select SIT Demo Profile
               </span>
-              <span className="text-[11px] text-slate-400">One-click log in</span>
+              <span className="text-[11px] text-slate-400">One-click populate</span>
             </div>
 
             <div className="space-y-2">
@@ -188,6 +438,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   <button
                     key={demo.usn}
                     type="button"
+                    disabled={isLoading}
                     onClick={() => handleSelectDemo(demo)}
                     className={`w-full text-left p-2.5 rounded-xl border text-xs transition-all flex items-center justify-between ${
                       isCurrent
@@ -207,14 +458,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               })}
             </div>
             <p className="text-[11px] text-slate-400 text-center mt-3 leading-relaxed">
-              Or type any custom SIT USN and password to access the repository.
+              Passwords and credentials are encrypted and stored securely in Supabase.
             </p>
           </div>
         </div>
 
         {/* Footer Note */}
         <div className="text-center mt-6 text-xs text-blue-200/80">
-          Siddaganga Institute of Technology, Tumakuru · Autonomous Engineering Repository
+          Siddaganga Institute of Technology, Tumakuru · Department of Chemical Engineering
         </div>
       </div>
     </div>

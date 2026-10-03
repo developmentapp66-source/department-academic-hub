@@ -9,6 +9,7 @@ export interface StudentUser {
   academicYear: string;
   email: string;
   avatarUrl?: string;
+  supabaseId?: string;
 }
 
 export interface Subject {

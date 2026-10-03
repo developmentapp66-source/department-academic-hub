@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StudentUser, NoteItem, QuestionPaperItem, LabExperiment, LabManualItem } from './types';
 import {
   DEMO_STUDENTS,
@@ -9,6 +9,12 @@ import {
   MOCK_ANNOUNCEMENTS,
   INSTITUTION_INFO,
 } from './data/mockData';
+import {
+  isSupabaseConfigured,
+  supabase,
+  mapSupabaseUserToStudent,
+  getOrSyncStudentProfile,
+} from './lib/supabase';
 import { Sidebar } from './components/Sidebar';
 import { TopHeader } from './components/TopHeader';
 import { LoginPage } from './components/LoginPage';
@@ -42,13 +48,51 @@ export default function App() {
     | null
   >(null);
 
+  // Listen to Supabase Auth State changes & restore active sessions
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
+    // 1. Check existing active session on load
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const student = await getOrSyncStudentProfile(session.user);
+        setCurrentUser(student);
+        setActiveSemester(student.semester || 3);
+      }
+    });
+
+    // 2. Subscribe to auth events (SIGN_IN, SIGN_OUT, USER_UPDATED)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const student = await getOrSyncStudentProfile(session.user);
+        setCurrentUser(student);
+        setActiveSemester(student.semester || 3);
+      } else {
+        setCurrentUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   const handleLogin = (user: StudentUser) => {
     setCurrentUser(user);
     setActiveSemester(user.semester || 3);
     setCurrentTab('dashboard');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.error('Error signing out of Supabase:', err);
+      }
+    }
     setCurrentUser(null);
     setCurrentTab('dashboard');
     setIsSidebarOpenMobile(false);
@@ -173,6 +217,10 @@ export default function App() {
                   <span className="font-bold text-slate-900">{INSTITUTION_INFO.name}</span>
                   <span>·</span>
                   <span>Department of {INSTITUTION_INFO.department}</span>
+                  <span>·</span>
+                  <span className="font-mono text-[11px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                    {isSupabaseConfigured ? 'Supabase Auth' : 'Demo Auth'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-4">
                   <span>Student: <strong className="text-slate-700 font-semibold">{currentUser.name}</strong> ({currentUser.usn})</span>
