@@ -129,7 +129,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             </div>
 
             {/* Admin Console shortcut for authorized faculty/admins */}
-            {(currentUser.role === 'faculty_admin' || currentUser.role === 'super_admin') && onOpenAdminDashboard && (
+            {(currentUser.role?.toLowerCase() === 'faculty_admin' || currentUser.role?.toLowerCase() === 'super_admin') && onOpenAdminDashboard && (
               <button
                 onClick={onOpenAdminDashboard}
                 className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 text-xs font-bold rounded-lg border border-amber-500/30 transition-colors"

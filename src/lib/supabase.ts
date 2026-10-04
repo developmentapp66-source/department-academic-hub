@@ -39,20 +39,64 @@ export function deriveEmailFromUsn(usn: string): string {
 }
 
 /**
- * Validates with the database if the given user ID has active admin privileges in `student_profiles`.
+ * Validates with the database if the given user or user ID has active admin privileges.
+ * Resilient to lookup by user ID or user email with case-insensitive role check.
  */
-export async function checkIsAdmin(userId: string): Promise<boolean> {
-  if (!isSupabaseConfigured || !userId) return false;
+export async function checkIsAdmin(userOrId: string | User): Promise<boolean> {
+  if (!isSupabaseConfigured || !userOrId) return false;
 
   try {
-    const { data, error } = await supabase
+    const userId = typeof userOrId === 'string' ? userOrId : userOrId.id;
+    let userEmail: string | undefined = typeof userOrId === 'object' ? userOrId.email : undefined;
+
+    // Check app_metadata or user_metadata if User object was provided
+    if (typeof userOrId === 'object') {
+      const u = userOrId as User;
+      const metaRole = (u.app_metadata?.role || u.user_metadata?.role)?.toLowerCase();
+      if (metaRole === 'faculty_admin' || metaRole === 'super_admin') {
+        return true;
+      }
+    }
+
+    // If only userId was passed, get user email to allow fallback search by email
+    if (!userEmail) {
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData?.user && authData.user.id === userId) {
+        userEmail = authData.user.email;
+        const metaRole = (authData.user.app_metadata?.role || authData.user.user_metadata?.role)?.toLowerCase();
+        if (metaRole === 'faculty_admin' || metaRole === 'super_admin') {
+          return true;
+        }
+      }
+    }
+
+    // 1. Try to query student_profiles by ID
+    const { data: byId } = await supabase
       .from('student_profiles')
       .select('role')
       .eq('id', userId)
       .maybeSingle();
 
-    if (error || !data) return false;
-    return data.role === 'faculty_admin' || data.role === 'super_admin';
+    if (byId?.role) {
+      const r = byId.role.toLowerCase();
+      if (r === 'faculty_admin' || r === 'super_admin') return true;
+    }
+
+    // 2. Fallback: Query student_profiles by Email
+    if (userEmail) {
+      const { data: byEmail } = await supabase
+        .from('student_profiles')
+        .select('role')
+        .eq('email', userEmail)
+        .maybeSingle();
+
+      if (byEmail?.role) {
+        const r = byEmail.role.toLowerCase();
+        if (r === 'faculty_admin' || r === 'super_admin') return true;
+      }
+    }
+
+    return false;
   } catch (err) {
     console.error('Error verifying admin authorization:', err);
     return false;
@@ -65,6 +109,7 @@ export async function checkIsAdmin(userId: string): Promise<boolean> {
  */
 export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string): Promise<StudentUser> {
   const metadata = user.user_metadata || {};
+  const appMeta = user.app_metadata || {};
 
   // Extract clean USN
   let usn = (metadata.usn || fallbackUsn || '').trim().toUpperCase();
@@ -80,6 +125,8 @@ export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string):
     usn = '1SI23CH015';
   }
 
+  const initialRole = (metadata.role || appMeta.role || 'student').toLowerCase();
+
   const defaultProfile: StudentUser = {
     usn,
     name: metadata.full_name || metadata.name || `Student (${usn})`,
@@ -91,7 +138,7 @@ export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string):
     academicYear: metadata.academic_year || '2024–2025',
     email: user.email || deriveEmailFromUsn(usn),
     supabaseId: user.id,
-    role: (metadata.role as any) || 'student',
+    role: initialRole as any,
     createdAt: user.created_at || new Date().toISOString(),
   };
 
@@ -100,27 +147,45 @@ export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string):
   }
 
   try {
-    // 1. Try to fetch existing row from student_profiles table
-    const { data, error } = await supabase
+    let profileRow: any = null;
+
+    // 1a. Try to fetch existing row from student_profiles table by id
+    const { data: byId, error: errId } = await supabase
       .from('student_profiles')
       .select('*')
       .eq('id', user.id)
       .maybeSingle();
 
-    if (data && !error) {
+    if (byId && !errId) {
+      profileRow = byId;
+    } else if (user.email) {
+      // 1b. Fallback: Try to fetch by email if id didn't match directly
+      const { data: byEmail, error: errEmail } = await supabase
+        .from('student_profiles')
+        .select('*')
+        .eq('email', user.email)
+        .maybeSingle();
+
+      if (byEmail && !errEmail) {
+        profileRow = byEmail;
+      }
+    }
+
+    if (profileRow) {
+      const resolvedRole = (profileRow.role || initialRole || 'student').toLowerCase();
       return {
-        usn: data.usn || defaultProfile.usn,
-        name: data.full_name || defaultProfile.name,
-        institution: data.institution || defaultProfile.institution,
-        department: data.department || defaultProfile.department,
-        deptCode: data.dept_code || defaultProfile.deptCode,
-        semester: Number(data.semester) || 3,
-        section: data.section || defaultProfile.section,
-        academicYear: data.academic_year || defaultProfile.academicYear,
-        email: data.email || user.email || defaultProfile.email,
+        usn: profileRow.usn || defaultProfile.usn,
+        name: profileRow.full_name || defaultProfile.name,
+        institution: profileRow.institution || defaultProfile.institution,
+        department: profileRow.department || defaultProfile.department,
+        deptCode: profileRow.dept_code || defaultProfile.deptCode,
+        semester: Number(profileRow.semester) || 3,
+        section: profileRow.section || defaultProfile.section,
+        academicYear: profileRow.academic_year || defaultProfile.academicYear,
+        email: profileRow.email || user.email || defaultProfile.email,
         supabaseId: user.id,
-        role: data.role || 'student',
-        createdAt: data.created_at || defaultProfile.createdAt,
+        role: resolvedRole as any,
+        createdAt: profileRow.created_at || defaultProfile.createdAt,
       };
     }
 
@@ -148,6 +213,7 @@ export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string):
       .maybeSingle();
 
     if (insertedData && !insertError) {
+      const resolvedRole = (insertedData.role || defaultProfile.role || 'student').toLowerCase();
       return {
         usn: insertedData.usn || defaultProfile.usn,
         name: insertedData.full_name || defaultProfile.name,
@@ -159,7 +225,7 @@ export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string):
         academicYear: insertedData.academic_year || defaultProfile.academicYear,
         email: insertedData.email || defaultProfile.email,
         supabaseId: user.id,
-        role: insertedData.role || 'student',
+        role: resolvedRole as any,
         createdAt: insertedData.created_at || defaultProfile.createdAt,
       };
     }

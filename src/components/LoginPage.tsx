@@ -98,7 +98,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onAdminLoginSucce
         if (data.user) {
           // Fetch student profile from student_profiles table (or sync initial data)
           const studentProfile = await getOrSyncStudentProfile(data.user, cleanUsn);
-          onLogin(studentProfile);
+          const role = studentProfile.role?.toLowerCase();
+          if ((role === 'faculty_admin' || role === 'super_admin') && onAdminLoginSuccess) {
+            onAdminLoginSuccess(studentProfile);
+          } else {
+            onLogin(studentProfile);
+          }
         }
       } else {
         // Sign Up (Register new student USN)

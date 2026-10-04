@@ -33,7 +33,9 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<StudentUser | null>(null);
 
   // Tracks if the administrator is viewing the Admin Console
-  const [isAdminView, setIsAdminView] = useState<boolean>(false);
+  const [isAdminView, setIsAdminView] = useState<boolean>(() => {
+    return localStorage.getItem('sit_admin_view_active') === 'true';
+  });
 
   // Tracks session initialization on page refresh to prevent UI flickering
   const [isCheckingSession, setIsCheckingSession] = useState<boolean>(isSupabaseConfigured);
@@ -71,12 +73,16 @@ export default function App() {
           setCurrentUser(profile);
           setActiveSemester(profile.semester || 3);
 
-          // If returning user was an administrator, enable admin view access
-          if (profile.role === 'faculty_admin' || profile.role === 'super_admin') {
-            const isConfirmedAdmin = await checkIsAdmin(session.user.id);
+          // If returning user is an administrator, preserve active admin view
+          const role = profile.role?.toLowerCase();
+          if (role === 'faculty_admin' || role === 'super_admin') {
+            const isConfirmedAdmin = await checkIsAdmin(session.user);
             if (isConfirmedAdmin) {
-              // Maintain role confirmation from database
-              profile.role = profile.role || 'faculty_admin';
+              profile.role = 'faculty_admin';
+              const savedPref = localStorage.getItem('sit_admin_view_active');
+              if (savedPref !== 'false') {
+                setIsAdminView(true);
+              }
             }
           }
         }
@@ -91,14 +97,27 @@ export default function App() {
     // 2. Subscribe to auth events (SIGN_IN, SIGN_OUT, TOKEN_REFRESHED, USER_UPDATED)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         const profile = await getOrSyncStudentProfile(session.user);
         setCurrentUser(profile);
         setActiveSemester(profile.semester || 3);
+
+        const role = profile.role?.toLowerCase();
+        if (role === 'faculty_admin' || role === 'super_admin') {
+          const isConfirmedAdmin = await checkIsAdmin(session.user);
+          if (isConfirmedAdmin) {
+            profile.role = 'faculty_admin';
+            const savedPref = localStorage.getItem('sit_admin_view_active');
+            if (savedPref !== 'false') {
+              setIsAdminView(true);
+            }
+          }
+        }
       } else {
         setCurrentUser(null);
         setIsAdminView(false);
+        localStorage.removeItem('sit_admin_view_active');
       }
     });
 
@@ -111,15 +130,24 @@ export default function App() {
     setCurrentUser(user);
     setActiveSemester(user.semester || 3);
     setCurrentTab('dashboard');
-    setIsAdminView(false);
+    const role = user.role?.toLowerCase();
+    if (role === 'faculty_admin' || role === 'super_admin') {
+      setIsAdminView(true);
+      localStorage.setItem('sit_admin_view_active', 'true');
+    } else {
+      setIsAdminView(false);
+      localStorage.setItem('sit_admin_view_active', 'false');
+    }
   };
 
   const handleAdminLoginSuccess = (admin: StudentUser) => {
     setCurrentUser(admin);
     setIsAdminView(true);
+    localStorage.setItem('sit_admin_view_active', 'true');
   };
 
   const handleLogout = async () => {
+    localStorage.removeItem('sit_admin_view_active');
     if (isSupabaseConfigured) {
       try {
         await supabase.auth.signOut();
@@ -152,6 +180,12 @@ export default function App() {
     manuals: MOCK_LAB_MANUALS.filter((m) => m.semester === (currentUser?.semester || 3)).length,
     announcements: MOCK_ANNOUNCEMENTS.filter((a) => a.priority === 'high').length,
   };
+
+  // Determine if active user is an administrator
+  const isUserAdmin = Boolean(
+    currentUser &&
+    (currentUser.role?.toLowerCase() === 'faculty_admin' || currentUser.role?.toLowerCase() === 'super_admin')
+  );
 
   // Render a clean loader while restoring session on initial page load / refresh
   if (isCheckingSession) {
@@ -188,13 +222,16 @@ export default function App() {
   }
 
   // If user is in Admin view AND database-validated as faculty_admin or super_admin:
-  if (isAdminView && (currentUser.role === 'faculty_admin' || currentUser.role === 'super_admin')) {
+  if (isAdminView && isUserAdmin) {
     return (
       <ToastProvider>
         <AdminDashboardView
           adminUser={currentUser}
           onLogoutAdmin={handleLogout}
-          onSwitchToStudentPortal={() => setIsAdminView(false)}
+          onSwitchToStudentPortal={() => {
+            setIsAdminView(false);
+            localStorage.setItem('sit_admin_view_active', 'false');
+          }}
         />
       </ToastProvider>
     );
@@ -226,8 +263,11 @@ export default function App() {
             onOpenMobileMenu={() => setIsSidebarOpenMobile(true)}
             announcementCount={navCounts.announcements}
             onOpenAdminDashboard={
-              currentUser.role === 'faculty_admin' || currentUser.role === 'super_admin'
-                ? () => setIsAdminView(true)
+              isUserAdmin
+                ? () => {
+                    setIsAdminView(true);
+                    localStorage.setItem('sit_admin_view_active', 'true');
+                  }
                 : undefined
             }
           />
@@ -305,9 +345,12 @@ export default function App() {
                 <span className="font-mono text-[11px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
                   Supabase Auth & RLS
                 </span>
-                {(currentUser.role === 'faculty_admin' || currentUser.role === 'super_admin') && (
+                {isUserAdmin && (
                   <button
-                    onClick={() => setIsAdminView(true)}
+                    onClick={() => {
+                      setIsAdminView(true);
+                      localStorage.setItem('sit_admin_view_active', 'true');
+                    }}
                     className="ml-2 font-semibold text-blue-700 hover:text-blue-900 underline text-[11px]"
                   >
                     Switch to Admin Console &rarr;
