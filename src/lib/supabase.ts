@@ -40,9 +40,9 @@ export function deriveEmailFromUsn(usn: string): string {
 
 /**
  * Validates with the database if the given user or user ID has active admin privileges.
- * Resilient to lookup by user ID or user email with case-insensitive role check.
+ * Resilient to lookup by user ID, USN (including 1SI25CH065), or user email with case-insensitive role check.
  */
-export async function checkIsAdmin(userOrId: string | User): Promise<boolean> {
+export async function checkIsAdmin(userOrId: string | User, inputUsnOrEmail?: string): Promise<boolean> {
   if (!isSupabaseConfigured || !userOrId) return false;
 
   try {
@@ -58,7 +58,22 @@ export async function checkIsAdmin(userOrId: string | User): Promise<boolean> {
       }
     }
 
-    // If only userId was passed, get user email to allow fallback search by email
+    // Determine target USN to check
+    let usnToCheck: string | undefined = undefined;
+    if (inputUsnOrEmail && !inputUsnOrEmail.includes('@')) {
+      usnToCheck = inputUsnOrEmail.trim().toUpperCase();
+    }
+    if (!usnToCheck && typeof userOrId === 'object') {
+      usnToCheck = (userOrId as User).user_metadata?.usn;
+    }
+    if (!usnToCheck && userEmail) {
+      const match = userEmail.match(/([0-9][a-zA-Z]{2}[0-9]{2}[a-zA-Z]{2}[0-9]{1,3})/i);
+      if (match) {
+        usnToCheck = match[1].toUpperCase();
+      }
+    }
+
+    // If only userId was passed, get user email to allow fallback search by email and USN
     if (!userEmail) {
       const { data: authData } = await supabase.auth.getUser();
       if (authData?.user && authData.user.id === userId) {
@@ -66,6 +81,12 @@ export async function checkIsAdmin(userOrId: string | User): Promise<boolean> {
         const metaRole = (authData.user.app_metadata?.role || authData.user.user_metadata?.role)?.toLowerCase();
         if (metaRole === 'faculty_admin' || metaRole === 'super_admin') {
           return true;
+        }
+        if (!usnToCheck && userEmail) {
+          const match = userEmail.match(/([0-9][a-zA-Z]{2}[0-9]{2}[a-zA-Z]{2}[0-9]{1,3})/i);
+          if (match) {
+            usnToCheck = match[1].toUpperCase();
+          }
         }
       }
     }
@@ -82,7 +103,21 @@ export async function checkIsAdmin(userOrId: string | User): Promise<boolean> {
       if (r === 'faculty_admin' || r === 'super_admin') return true;
     }
 
-    // 2. Fallback: Query student_profiles by Email
+    // 2. Try to query student_profiles by USN (e.g. 1SI25CH065)
+    if (usnToCheck) {
+      const { data: byUsn } = await supabase
+        .from('student_profiles')
+        .select('role')
+        .eq('usn', usnToCheck)
+        .maybeSingle();
+
+      if (byUsn?.role) {
+        const r = byUsn.role.toLowerCase();
+        if (r === 'faculty_admin' || r === 'super_admin') return true;
+      }
+    }
+
+    // 3. Fallback: Query student_profiles by Email
     if (userEmail) {
       const { data: byEmail } = await supabase
         .from('student_profiles')
@@ -158,8 +193,23 @@ export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string):
 
     if (byId && !errId) {
       profileRow = byId;
-    } else if (user.email) {
-      // 1b. Fallback: Try to fetch by email if id didn't match directly
+    }
+
+    // 1b. Fallback: Try to fetch by USN (e.g. 1SI25CH065)
+    if (!profileRow && usn) {
+      const { data: byUsn, error: errUsn } = await supabase
+        .from('student_profiles')
+        .select('*')
+        .eq('usn', usn)
+        .maybeSingle();
+
+      if (byUsn && !errUsn) {
+        profileRow = byUsn;
+      }
+    }
+
+    // 1c. Fallback: Try to fetch by email if id and USN didn't match directly
+    if (!profileRow && user.email) {
       const { data: byEmail, error: errEmail } = await supabase
         .from('student_profiles')
         .select('*')
@@ -173,6 +223,19 @@ export async function getOrSyncStudentProfile(user: User, fallbackUsn?: string):
 
     if (profileRow) {
       const resolvedRole = (profileRow.role || initialRole || 'student').toLowerCase();
+
+      // If the row exists by USN or email but had a different id, sync id to authenticated user
+      if (profileRow.id !== user.id) {
+        try {
+          await supabase
+            .from('student_profiles')
+            .update({ id: user.id, email: user.email || profileRow.email })
+            .eq('usn', profileRow.usn);
+        } catch {
+          // Ignore if constrained by DB
+        }
+      }
+
       return {
         usn: profileRow.usn || defaultProfile.usn,
         name: profileRow.full_name || defaultProfile.name,

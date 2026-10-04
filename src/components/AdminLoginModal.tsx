@@ -88,7 +88,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       }
 
       // 2. SECURITY CHECK: Verify user role from Supabase database table (RLS guarded)
-      const isAdmin = await checkIsAdmin(data.user);
+      const isAdmin = await checkIsAdmin(data.user, cleanInput);
 
       if (!isAdmin) {
         // Immediately revoke session so normal students cannot hold authenticated tokens against admin endpoints
@@ -99,7 +99,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       }
 
       // 3. User is verified admin -> retrieve profile and grant access
-      const adminProfile = await getOrSyncStudentProfile(data.user);
+      const adminProfile = await getOrSyncStudentProfile(data.user, cleanInput);
       if (adminProfile.role !== 'super_admin') {
         adminProfile.role = 'faculty_admin';
       }
